@@ -1,0 +1,6 @@
+{
+  "name": "SmartBuild - Construction Contract & BIM Management",
+  "description": "Platform digital pengelolaan kontrak konstruksi, pemantauan progres proyek, Building Information Modeling (BIM), verifikasi tahapan pekerjaan, dan simulasi pembayaran berbasis Smart Contract.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
