@@ -17,8 +17,6 @@ import {
 } from 'lucide-react';
 import {
   Contract,
-  ContractMilestone,
-  ContractStatus,
   Project,
   ProjectStatus,
   SmartBuildDatabase,
@@ -214,10 +212,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">Manajemen Proyek Konstruksi</h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
+            Manajemen Proyek Konstruksi
+          </h1>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Kelola daftar proyek, dokumen DED, pihak terlibat, target penyelesaian, dan status
             siklus proyek.
           </p>
@@ -237,13 +237,13 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {feedbackMessage && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between"
+          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
         >
           <span>{feedbackMessage}</span>
           <button
             type="button"
             onClick={() => setFeedbackMessage(null)}
-            className="text-emerald-700 font-bold"
+            className="text-emerald-700 dark:text-emerald-300 font-bold"
             aria-label="Tutup pesan"
           >
             <X className="w-4 h-4" />
@@ -252,7 +252,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       )}
 
       {/* Search, Filter Status & Sort Controls */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
         <div className="md:col-span-5 relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -261,18 +261,21 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari nama proyek, ID, lokasi, atau kontraktor..."
-            className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
+            className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
           />
         </div>
         <div className="md:col-span-4 flex items-center gap-2">
-          <label htmlFor="filter-status-proyek" className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+          <label
+            htmlFor="filter-status-proyek"
+            className="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap"
+          >
             Filter Status:
           </label>
           <select
             id="filter-status-proyek"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white"
+            className="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           >
             <option value="ALL">Semua Status ({db.projects.length})</option>
             {PROJECT_STATUSES.map((st) => (
@@ -288,7 +291,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             aria-label="Urutkan proyek"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'name' | 'value_desc' | 'progress_desc')}
-            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white"
+            className="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           >
             <option value="name">Urutkan: Nama Proyek (A-Z)</option>
             <option value="value_desc">Urutkan: Nilai Kontrak Tertinggi</option>
@@ -298,11 +301,11 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       </div>
 
       {/* Projects Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                 <th className="py-3 px-4 font-semibold">ID &amp; Nama Proyek</th>
                 <th className="py-3 px-4 font-semibold">Kategori &amp; Lokasi</th>
                 <th className="py-3 px-4 font-semibold">Pengguna Jasa &amp; Kontraktor</th>
@@ -312,51 +315,56 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 <th className="py-3 px-4 font-semibold text-right">Tindakan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredProjects.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-400">
                     Tidak ada data proyek yang sesuai dengan kriteria pencarian atau filter.
                   </td>
                 </tr>
               ) : (
                 filteredProjects.map((project) => (
-                  <tr key={project.id} className="hover:bg-slate-50/80">
+                  <tr
+                    key={project.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
+                  >
                     <td className="py-3.5 px-4">
-                      <div className="font-mono text-[11px] text-slate-500">
+                      <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
                         {project.code} · {project.isDemo ? 'DEMO' : 'LIVE'}
                       </div>
-                      <div className="font-bold text-[#071D49] text-sm mt-0.5">{project.name}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="font-bold text-[#071D49] dark:text-white text-sm mt-0.5">
+                        {project.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         Mulai: {formatDateID(project.startDate)} · Target:{' '}
                         {formatDateID(project.targetEndDate)}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-700">
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
                       <div className="font-semibold">{project.category}</div>
-                      <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3 shrink-0" />
                         <span>{project.location}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-700">
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
                       <div>
-                        <span className="text-slate-500">Owner:</span>{' '}
+                        <span className="text-slate-500 dark:text-slate-400">Owner:</span>{' '}
                         <span className="font-semibold">{project.clientName}</span>
                       </div>
                       <div className="mt-0.5">
-                        <span className="text-slate-500">Kontraktor:</span>{' '}
+                        <span className="text-slate-500 dark:text-slate-400">Kontraktor:</span>{' '}
                         <span className="font-semibold">{project.contractorName}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
                       {formatRupiah(project.contractValue)}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <div className="font-mono font-bold text-[#1264F4] tabular-nums">
+                      <div className="font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                         {project.overallProgress}%
                       </div>
-                      <div className="w-20 ml-auto h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+                      <div className="w-20 ml-auto h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
                         <div
                           className="h-full bg-[#1264F4]"
                           style={{ width: `${project.overallProgress}%` }}
@@ -364,14 +372,16 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-800">{project.status}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        {project.status}
+                      </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => setSelectedDetailProject(project)}
-                          className="px-2.5 py-1.5 rounded-md border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium flex items-center gap-1"
                           aria-label={`Detail proyek ${project.name}`}
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -382,7 +392,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                             <button
                               type="button"
                               onClick={() => openEditModal(project)}
-                              className="p-1.5 rounded-md border border-slate-200 hover:bg-slate-100 text-slate-700"
+                              className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
                               aria-label={`Edit proyek ${project.name}`}
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -390,7 +400,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                             <button
                               type="button"
                               onClick={() => setDeleteConfirmProject(project)}
-                              className="p-1.5 rounded-md border border-red-200 hover:bg-red-50 text-red-600"
+                              className="p-1.5 rounded-md border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400"
                               aria-label={`Hapus proyek ${project.name}`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -415,15 +425,20 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           aria-labelledby="project-form-title"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-2xl w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <h2 id="project-form-title" className="text-base font-bold text-[#071D49]">
-                {editingProject ? `Edit Proyek: ${editingProject.code}` : 'Tambah Proyek Konstruksi Baru'}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+              <h2
+                id="project-form-title"
+                className="text-base font-bold text-[#071D49] dark:text-white"
+              >
+                {editingProject
+                  ? `Edit Proyek: ${editingProject.code}`
+                  : 'Tambah Proyek Konstruksi Baru'}
               </h2>
               <button
                 type="button"
                 onClick={() => setShowFormModal(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup modal proyek"
               >
                 <X className="w-5 h-5" />
@@ -431,7 +446,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
                 {formError}
               </div>
             )}
@@ -439,7 +454,10 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             <form onSubmit={handleSaveProject} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="prj-name" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-name"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nama Proyek
                   </label>
                   <input
@@ -448,18 +466,21 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: Pembangunan Gedung Laboratorium"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="prj-cat" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-cat"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Kategori Proyek
                   </label>
                   <select
                     id="prj-cat"
                     value={category}
                     onChange={(e) => setCategory(e.target.value as Project['category'])}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
                   >
                     <option value="Fasilitas Publik">Fasilitas Publik</option>
                     <option value="Gedung Komersial">Gedung Komersial</option>
@@ -471,7 +492,10 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </div>
 
               <div>
-                <label htmlFor="prj-location" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="prj-location"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Lokasi Proyek
                 </label>
                 <input
@@ -480,12 +504,15 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Alamat lengkap lokasi proyek konstruksi"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
               <div>
-                <label htmlFor="prj-desc" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="prj-desc"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Deskripsi Proyek
                 </label>
                 <textarea
@@ -494,13 +521,16 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Lingkup pekerjaan utama, spesifikasi bangunan, dan target teknis..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label htmlFor="prj-client" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-client"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nama Pengguna Jasa
                   </label>
                   <input
@@ -508,11 +538,14 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="prj-contractor" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-contractor"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nama Kontraktor
                   </label>
                   <input
@@ -520,11 +553,14 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     type="text"
                     value={contractorName}
                     onChange={(e) => setContractorName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="prj-value" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-value"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nilai Kontrak (Rp)
                   </label>
                   <input
@@ -532,14 +568,17 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     type="number"
                     value={contractValue}
                     onChange={(e) => setContractValue(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label htmlFor="prj-start" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-start"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Tanggal Mulai
                   </label>
                   <input
@@ -547,11 +586,14 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="prj-end" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-end"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Target Penyelesaian
                   </label>
                   <input
@@ -559,18 +601,21 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     type="date"
                     value={targetEndDate}
                     onChange={(e) => setTargetEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="prj-status" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="prj-status"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Status Proyek
                   </label>
                   <select
                     id="prj-status"
                     value={status}
                     onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
                   >
                     {PROJECT_STATUSES.map((st) => (
                       <option key={st} value={st}>
@@ -582,9 +627,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </div>
 
               {!editingProject && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <div>
-                    <label htmlFor="prj-doc" className="block font-semibold text-slate-700 mb-1">
+                    <label
+                      htmlFor="prj-doc"
+                      className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                    >
                       Dokumen Awal Proyek
                     </label>
                     <input
@@ -592,11 +640,14 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                       type="text"
                       value={docTitle}
                       onChange={(e) => setDocTitle(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                     />
                   </div>
                   <div>
-                    <label htmlFor="prj-photo" className="block font-semibold text-slate-700 mb-1">
+                    <label
+                      htmlFor="prj-photo"
+                      className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                    >
                       Keterangan Foto Dokumentasi Awal
                     </label>
                     <input
@@ -604,17 +655,17 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                       type="text"
                       value={photoCaption}
                       onChange={(e) => setPhotoCaption(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowFormModal(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
                 >
                   Batal
                 </button>
@@ -637,65 +688,72 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-3xl w-full p-6 shadow-xl space-y-5">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-3xl w-full p-6 shadow-xl space-y-5">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className="text-xs font-mono text-slate-500">
-                  ID Proyek: {selectedDetailProject.code} · Kategori: {selectedDetailProject.category} ·{' '}
+                <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                  ID Proyek: {selectedDetailProject.code} · Kategori:{' '}
+                  {selectedDetailProject.category} ·{' '}
                   {selectedDetailProject.isDemo ? 'DEMO' : 'LIVE'}
                 </div>
-                <h2 className="text-lg font-bold text-[#071D49] mt-0.5">
+                <h2 className="text-lg font-bold text-[#071D49] dark:text-white mt-0.5">
                   {selectedDetailProject.name}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedDetailProject(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup detail proyek"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs bg-slate-50 dark:bg-slate-800/70 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
               <div>
-                <div className="text-slate-500">Pengguna Jasa (Owner)</div>
-                <div className="font-bold text-slate-900 mt-0.5">
+                <div className="text-slate-500 dark:text-slate-400">Pengguna Jasa (Owner)</div>
+                <div className="font-bold text-slate-900 dark:text-white mt-0.5">
                   {selectedDetailProject.clientName}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">Penyedia Jasa (Kontraktor)</div>
-                <div className="font-bold text-slate-900 mt-0.5">
+                <div className="text-slate-500 dark:text-slate-400">Penyedia Jasa (Kontraktor)</div>
+                <div className="font-bold text-slate-900 dark:text-white mt-0.5">
                   {selectedDetailProject.contractorName}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">Nilai Kontrak &amp; Progres</div>
-                <div className="font-mono font-bold text-[#1264F4] mt-0.5 tabular-nums">
-                  {formatRupiah(selectedDetailProject.contractValue)} ({selectedDetailProject.overallProgress}%)
+                <div className="text-slate-500 dark:text-slate-400">Nilai Kontrak &amp; Progres</div>
+                <div className="font-mono font-bold text-[#1264F4] dark:text-blue-400 mt-0.5 tabular-nums">
+                  {formatRupiah(selectedDetailProject.contractValue)} (
+                  {selectedDetailProject.overallProgress}%)
                 </div>
               </div>
             </div>
 
             <div className="text-xs space-y-2">
-              <div className="font-semibold text-slate-800">Deskripsi &amp; Lokasi Pekerjaan</div>
-              <p className="text-slate-600 leading-relaxed">{selectedDetailProject.description}</p>
-              <div className="text-slate-500 flex items-center gap-4 pt-1">
+              <div className="font-semibold text-slate-800 dark:text-slate-200">
+                Deskripsi &amp; Lokasi Pekerjaan
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                {selectedDetailProject.description}
+              </p>
+              <div className="text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-4 pt-1">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" /> {selectedDetailProject.location}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" /> {formatDateID(selectedDetailProject.startDate)}{' '}
-                  s/d {formatDateID(selectedDetailProject.targetEndDate)}
+                  <Calendar className="w-3.5 h-3.5" />{' '}
+                  {formatDateID(selectedDetailProject.startDate)} s/d{' '}
+                  {formatDateID(selectedDetailProject.targetEndDate)}
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="border border-slate-200 rounded-lg p-3.5">
-                <div className="font-bold text-[#071D49] mb-2">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-3.5">
+                <div className="font-bold text-[#071D49] dark:text-white mb-2">
                   Dokumen Proyek ({selectedDetailProject.documents.length})
                 </div>
                 {selectedDetailProject.documents.length === 0 ? (
@@ -703,7 +761,10 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 ) : (
                   <ul className="space-y-2">
                     {selectedDetailProject.documents.map((d) => (
-                      <li key={d.id} className="flex items-center justify-between text-slate-700">
+                      <li
+                        key={d.id}
+                        className="flex items-center justify-between text-slate-700 dark:text-slate-300"
+                      >
                         <span className="truncate font-medium">{d.title}</span>
                         <span className="text-slate-400 font-mono text-[11px] shrink-0">
                           {d.size}
@@ -714,8 +775,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 )}
               </div>
 
-              <div className="border border-slate-200 rounded-lg p-3.5">
-                <div className="font-bold text-[#071D49] mb-2">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-3.5">
+                <div className="font-bold text-[#071D49] dark:text-white mb-2">
                   Foto Dokumentasi Lapangan ({selectedDetailProject.photos.length})
                 </div>
                 {selectedDetailProject.photos.length === 0 ? (
@@ -723,7 +784,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 ) : (
                   <ul className="space-y-2">
                     {selectedDetailProject.photos.map((ph) => (
-                      <li key={ph.id} className="text-slate-700">
+                      <li key={ph.id} className="text-slate-700 dark:text-slate-300">
                         <div className="font-medium">{ph.caption}</div>
                         <div className="text-[11px] text-slate-400">
                           Tahap: {ph.stage} · {formatDateID(ph.uploadedAt)}
@@ -735,11 +796,11 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-200">
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setSelectedDetailProject(null)}
-                className="px-4 py-2 rounded-lg bg-[#071D49] text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 text-white text-xs font-semibold"
               >
                 Tutup Detail
               </button>
@@ -755,8 +816,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-2.5 text-red-600">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <h2 className="text-base font-bold">Konfirmasi Penghapusan Proyek</h2>
             </div>
@@ -770,28 +831,30 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               const check = canDeleteProject(deleteConfirmProject, hasActiveContract);
               return (
                 <>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                     Anda memilih untuk menghapus proyek{' '}
-                    <span className="font-bold text-slate-900">{deleteConfirmProject.name}</span> (
-                    {deleteConfirmProject.code}).
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {deleteConfirmProject.name}
+                    </span>{' '}
+                    ({deleteConfirmProject.code}).
                   </p>
                   {!check.allowed ? (
-                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
                       <div className="font-bold mb-1">Pembatasan Keamanan Sistem:</div>
                       <div>{check.reason}</div>
                     </div>
                   ) : (
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200">
                       Proyek ini berstatus <strong>{deleteConfirmProject.status}</strong> dan
                       memenuhi syarat untuk dihapus secara permanen.
                     </div>
                   )}
 
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
                     <button
                       type="button"
                       onClick={() => setDeleteConfirmProject(null)}
-                      className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700"
+                      className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
                     >
                       Batal
                     </button>
@@ -983,12 +1046,12 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Manajemen Kontrak Digital &amp; Kesepakatan Kerja
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Kelola kesepakatan kedua belah pihak, klausul hak dan kewajiban, tahapan pembayaran
             otomatis, serta tanda tangan persetujuan digital.
           </p>
@@ -1008,13 +1071,13 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
       {statusMessage && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between"
+          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
         >
           <span>{statusMessage}</span>
           <button
             type="button"
             onClick={() => setStatusMessage(null)}
-            className="font-bold text-emerald-700"
+            className="font-bold text-emerald-700 dark:text-emerald-300"
             aria-label="Tutup notifikasi kontrak"
           >
             <X className="w-4 h-4" />
@@ -1022,7 +1085,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
         </div>
       )}
 
-      {/* Contracts Cards / Table */}
+      {/* Contracts Cards */}
       <div className="space-y-4">
         {db.contracts.map((ctr) => {
           const milestones = db.contract_milestones.filter((m) => m.contractId === ctr.id);
@@ -1031,43 +1094,48 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           return (
             <div
               key={ctr.id}
-              className="bg-white border border-slate-200 rounded-xl p-5 space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4"
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <div className="text-xs font-mono text-slate-500">
+                  <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                     No. Kontrak: {ctr.contractNumber} · Tanggal: {formatDateID(ctr.contractDate)} ·
                     Durasi: {ctr.durationDays} Hari · {ctr.isDemo ? 'DEMO' : 'LIVE'}
                   </div>
-                  <h2 className="text-base font-bold text-[#071D49] mt-0.5">{ctr.projectName}</h2>
+                  <h2 className="text-base font-bold text-[#071D49] dark:text-white mt-0.5">
+                    {ctr.projectName}
+                  </h2>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-700">
-                    Status Kontrak: <strong className="text-[#1264F4]">{ctr.status}</strong>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Status Kontrak:{' '}
+                    <strong className="text-[#1264F4] dark:text-blue-400">{ctr.status}</strong>
                   </span>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-sm font-mono font-bold text-[#071D49] tabular-nums">
+                  <span className="text-slate-300 dark:text-slate-700">|</span>
+                  <span className="text-sm font-mono font-bold text-[#071D49] dark:text-white tabular-nums">
                     {formatRupiah(ctr.totalValue)}
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed">{ctr.workDescription}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                {ctr.workDescription}
+              </p>
 
               {/* Milestones Summary Strip */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {milestones.map((ms) => (
                   <div
                     key={ms.id}
-                    className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 text-xs"
+                    className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 text-xs"
                   >
-                    <div className="font-semibold text-slate-800">
+                    <div className="font-semibold text-slate-800 dark:text-slate-100">
                       Tahap {ms.order}: {ms.name} ({ms.weightPercentage}%)
                     </div>
-                    <div className="font-mono font-bold text-[#071D49] tabular-nums mt-1">
+                    <div className="font-mono font-bold text-[#071D49] dark:text-blue-300 tabular-nums mt-1">
                       {formatRupiah(ms.nominalValue)}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       Status: {ms.status} ({ms.realizedProgress}%)
                     </div>
                   </div>
@@ -1075,23 +1143,27 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
               </div>
 
               {/* Approval Status & Action Bar */}
-              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-                <div className="flex flex-wrap items-center gap-4 text-slate-600">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-4 text-slate-600 dark:text-slate-300">
                   <span className="flex items-center gap-1.5">
                     <CheckCircle
                       className={`w-4 h-4 ${
-                        ctr.clientApproved ? 'text-[#10B981]' : 'text-slate-300'
+                        ctr.clientApproved ? 'text-[#10B981]' : 'text-slate-300 dark:text-slate-600'
                       }`}
                     />
                     <span>
                       Pengguna Jasa:{' '}
-                      <strong>{ctr.clientApproved ? 'Telah Menyetujui' : 'Belum Menyetujui'}</strong>
+                      <strong>
+                        {ctr.clientApproved ? 'Telah Menyetujui' : 'Belum Menyetujui'}
+                      </strong>
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <CheckCircle
                       className={`w-4 h-4 ${
-                        ctr.contractorApproved ? 'text-[#10B981]' : 'text-slate-300'
+                        ctr.contractorApproved
+                          ? 'text-[#10B981]'
+                          : 'text-slate-300 dark:text-slate-600'
                       }`}
                     />
                     <span>
@@ -1107,7 +1179,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setSelectedContract(ctr)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1.5"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>Detail &amp; Cetak PDF</span>
@@ -1117,7 +1189,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                     <button
                       type="button"
                       onClick={() => openEditContract(ctr)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1.5"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Edit Kontrak</span>
@@ -1133,7 +1205,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                           `Kontrak ${ctr.contractNumber} telah dikirim kepada pihak terkait untuk disetujui.`
                         );
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[#071D49] hover:bg-slate-800 text-white font-semibold flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold flex items-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Kirim untuk Persetujuan</span>
@@ -1185,9 +1257,9 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-3xl w-full p-6 shadow-xl my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <h2 className="text-base font-bold text-[#071D49]">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-3xl w-full p-6 shadow-xl my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+              <h2 className="text-base font-bold text-[#071D49] dark:text-white">
                 {editingContract
                   ? `Edit Kontrak Digital: ${editingContract.contractNumber}`
                   : 'Buat Kontrak Digital Baru'}
@@ -1195,7 +1267,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowContractForm(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup form kontrak"
               >
                 <X className="w-5 h-5" />
@@ -1203,7 +1275,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
                 {formError}
               </div>
             )}
@@ -1211,7 +1283,10 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
             <form onSubmit={handleSaveContract} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label htmlFor="ctr-project" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="ctr-project"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Pilih Proyek
                   </label>
                   <select
@@ -1222,7 +1297,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                       const prj = db.projects.find((p) => p.id === e.target.value);
                       if (prj) setTotalValue(prj.contractValue);
                     }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
                   >
                     {db.projects.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1232,7 +1307,10 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="ctr-value" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="ctr-value"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nilai Total Kontrak (Rp)
                   </label>
                   <input
@@ -1240,11 +1318,14 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                     type="number"
                     value={totalValue}
                     onChange={(e) => setTotalValue(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                   />
                 </div>
                 <div>
-                  <label htmlFor="ctr-duration" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="ctr-duration"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Durasi Pekerjaan (Hari)
                   </label>
                   <input
@@ -1252,13 +1333,16 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                     type="number"
                     value={durationDays}
                     onChange={(e) => setDurationDays(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="ctr-work" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="ctr-work"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Deskripsi Lingkup Pekerjaan
                 </label>
                 <textarea
@@ -1266,17 +1350,17 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                   rows={2}
                   value={workDescription}
                   onChange={(e) => setWorkDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
               {/* Milestones editor */}
-              <div className="border border-slate-200 rounded-lg p-3.5 bg-slate-50 space-y-2.5">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3.5 bg-slate-50 dark:bg-slate-800/70 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#071D49]">
+                  <span className="font-bold text-[#071D49] dark:text-white">
                     Tahapan Pekerjaan &amp; Termin Pembayaran (Total Harus 100%)
                   </span>
-                  <span className="font-mono font-bold text-[#1264F4] tabular-nums">
+                  <span className="font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                     Total Bobot:{' '}
                     {milestoneInputs.reduce((s, m) => s + Number(m.weightPercentage || 0), 0)}%
                   </span>
@@ -1284,7 +1368,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                 {milestoneInputs.map((ms, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2 rounded border border-slate-200"
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700"
                   >
                     <div className="sm:col-span-3">
                       <input
@@ -1296,7 +1380,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                           next[idx] = { ...next[idx], name: e.target.value };
                           setMilestoneInputs(next);
                         }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded"
+                        className="w-full px-2 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded"
                         placeholder="Nama tahapan"
                       />
                     </div>
@@ -1310,7 +1394,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                           next[idx] = { ...next[idx], description: e.target.value };
                           setMilestoneInputs(next);
                         }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded"
+                        className="w-full px-2 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded"
                         placeholder="Uraian tahapan"
                       />
                     </div>
@@ -1327,10 +1411,10 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                           };
                           setMilestoneInputs(next);
                         }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded font-mono text-right"
+                        className="w-full px-2 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded font-mono text-right"
                       />
                     </div>
-                    <div className="sm:col-span-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
+                    <div className="sm:col-span-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-100 tabular-nums">
                       {formatRupiah(calculateMilestoneNominal(totalValue, ms.weightPercentage))}
                     </div>
                   </div>
@@ -1339,7 +1423,10 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="ctr-rights" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="ctr-rights"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Hak dan Kewajiban Kedua Pihak
                   </label>
                   <textarea
@@ -1347,11 +1434,14 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                     rows={2}
                     value={rightsAndObligations}
                     onChange={(e) => setRightsAndObligations(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="ctr-dispute" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="ctr-dispute"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Ketentuan Pembatalan &amp; Penyelesaian Perselisihan
                   </label>
                   <textarea
@@ -1359,16 +1449,16 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                     rows={2}
                     value={disputeResolution}
                     onChange={(e) => setDisputeResolution(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowContractForm(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
                 >
                   Batal
                 </button>
@@ -1391,14 +1481,14 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-3xl w-full p-6 shadow-xl space-y-5 my-8">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-3xl w-full p-6 shadow-xl space-y-5 my-8">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className="text-xs font-mono text-slate-500">
+                <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                   DOKUMEN KONTRAK KONSTRUKSI DIGITAL · {selectedContract.contractNumber} ·{' '}
                   {selectedContract.isDemo ? 'DEMO' : 'LIVE'}
                 </div>
-                <h2 className="text-lg font-bold text-[#071D49] mt-0.5">
+                <h2 className="text-lg font-bold text-[#071D49] dark:text-white mt-0.5">
                   {selectedContract.projectName}
                 </h2>
               </div>
@@ -1414,7 +1504,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedContract(null)}
-                  className="text-slate-400 hover:text-slate-700"
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   aria-label="Tutup detail kontrak"
                 >
                   <X className="w-5 h-5" />
@@ -1422,62 +1512,81 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs">
               <div>
-                <div className="text-slate-500">Nilai Total Kontrak</div>
-                <div className="font-mono font-bold text-base text-[#071D49] tabular-nums mt-0.5">
+                <div className="text-slate-500 dark:text-slate-400">Nilai Total Kontrak</div>
+                <div className="font-mono font-bold text-base text-[#071D49] dark:text-white tabular-nums mt-0.5">
                   {formatRupiah(selectedContract.totalValue)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">Durasi &amp; Tanggal Kontrak</div>
-                <div className="font-semibold text-slate-900 mt-0.5">
-                  {selectedContract.durationDays} Hari Kalender ({formatDateID(selectedContract.contractDate)})
+                <div className="text-slate-500 dark:text-slate-400">
+                  Durasi &amp; Tanggal Kontrak
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {selectedContract.durationDays} Hari Kalender (
+                  {formatDateID(selectedContract.contractDate)})
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">Status Hukum Kontrak</div>
-                <div className="font-bold text-[#1264F4] mt-0.5">{selectedContract.status}</div>
+                <div className="text-slate-500 dark:text-slate-400">Status Hukum Kontrak</div>
+                <div className="font-bold text-[#1264F4] dark:text-blue-400 mt-0.5">
+                  {selectedContract.status}
+                </div>
               </div>
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <div className="font-bold text-[#071D49]">1. Lingkup &amp; Deskripsi Pekerjaan</div>
-                <p className="text-slate-600 mt-1">{selectedContract.workDescription}</p>
+                <div className="font-bold text-[#071D49] dark:text-white">
+                  1. Lingkup &amp; Deskripsi Pekerjaan
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1">
+                  {selectedContract.workDescription}
+                </p>
               </div>
               <div>
-                <div className="font-bold text-[#071D49]">2. Ketentuan Pembayaran Termin</div>
-                <p className="text-slate-600 mt-1">{selectedContract.paymentTerms}</p>
+                <div className="font-bold text-[#071D49] dark:text-white">
+                  2. Ketentuan Pembayaran Termin
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1">
+                  {selectedContract.paymentTerms}
+                </p>
               </div>
               <div>
-                <div className="font-bold text-[#071D49]">3. Hak dan Kewajiban Pihak</div>
-                <p className="text-slate-600 mt-1">{selectedContract.rightsAndObligations}</p>
+                <div className="font-bold text-[#071D49] dark:text-white">
+                  3. Hak dan Kewajiban Pihak
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1">
+                  {selectedContract.rightsAndObligations}
+                </p>
               </div>
               <div>
-                <div className="font-bold text-[#071D49]">
+                <div className="font-bold text-[#071D49] dark:text-white">
                   4. Ketentuan Pembatalan &amp; Penyelesaian Perselisihan
                 </div>
-                <p className="text-slate-600 mt-1">
+                <p className="text-slate-600 dark:text-slate-300 mt-1">
                   {selectedContract.cancellationClause} {selectedContract.disputeResolution}
                 </p>
               </div>
             </div>
 
             {/* Riwayat Perubahan Kontrak */}
-            <div className="border-t border-slate-200 pt-4 text-xs">
-              <div className="font-bold text-[#071D49] mb-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs">
+              <div className="font-bold text-[#071D49] dark:text-white mb-2">
                 Riwayat Perubahan &amp; Persetujuan Kontrak
               </div>
               <div className="space-y-2">
                 {selectedContract.revisionHistory.map((rev) => (
                   <div
                     key={rev.id}
-                    className="flex items-center justify-between p-2.5 rounded bg-slate-50 border border-slate-200/70"
+                    className="flex items-center justify-between p-2.5 rounded bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700"
                   >
                     <div>
-                      <span className="font-semibold text-slate-800">{rev.actor}:</span>{' '}
-                      <span className="text-slate-600">{rev.summary}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-100">
+                        {rev.actor}:
+                      </span>{' '}
+                      <span className="text-slate-600 dark:text-slate-300">{rev.summary}</span>
                     </div>
                     <span className="font-mono text-[11px] text-slate-400 shrink-0">
                       {formatDateID(rev.date)}
@@ -1487,11 +1596,11 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-200 no-print">
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800 no-print">
               <button
                 type="button"
                 onClick={() => setSelectedContract(null)}
-                className="px-4 py-2 rounded-lg bg-[#071D49] text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 text-white text-xs font-semibold"
               >
                 Tutup Dokumen
               </button>

@@ -12,12 +12,15 @@ import {
   Users,
   Settings,
   HelpCircle,
-  Building2,
   Bell,
   LogOut,
   Menu,
   X,
   RotateCcw,
+  Moon,
+  Sun,
+  Sparkles,
+  Cloud,
 } from 'lucide-react';
 import { INITIAL_DATABASE } from './data/seedData';
 import {
@@ -41,6 +44,13 @@ import {
   evaluateSmartContractPaymentTrigger,
   getRoleLabel,
 } from './utils/calculations';
+import {
+  AppsScriptConfig,
+  DEFAULT_APPS_SCRIPT_CONFIG,
+  isValidAppsScriptUrl,
+  syncDatabaseToAppsScript,
+} from './services/appsScriptService';
+import { SmartBuildLoadingOverlay, SmartBuildLogo } from './components/SmartBuildBrand';
 import { AuthViews } from './components/AuthViews';
 import { DashboardView } from './components/DashboardView';
 import { ContractsView, ProjectsView } from './components/ProjectsAndContractsView';
@@ -59,20 +69,22 @@ import {
 } from './components/PaymentsTransactionsReportsView';
 
 const STORAGE_KEY = 'smartbuild_enterprise_db_v1';
+const THEME_STORAGE_KEY = 'smartbuild_theme_dark_v1';
+const GAS_CONFIG_KEY = 'smartbuild_gas_config_v1';
 
-const MENU_ITEMS: { id: MenuId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'projects', label: 'Proyek Saya', icon: FolderKanban },
-  { id: 'contracts', label: 'Kontrak Digital', icon: FileSignature },
-  { id: 'progress', label: 'Progress Proyek', icon: TrendingUp },
-  { id: 'bim', label: 'BIM Viewer', icon: Box },
-  { id: 'verification', label: 'Verifikasi Pekerjaan', icon: ClipboardCheck },
-  { id: 'payments', label: 'Pembayaran', icon: Wallet },
-  { id: 'transactions', label: 'Riwayat Transaksi', icon: History },
-  { id: 'reports', label: 'Laporan', icon: BarChart3 },
-  { id: 'users', label: 'Pengguna', icon: Users },
-  { id: 'settings', label: 'Pengaturan', icon: Settings },
-  { id: 'help', label: 'Bantuan', icon: HelpCircle },
+const MENU_ITEMS: { id: MenuId; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'dashboard', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard },
+  { id: 'projects', label: 'Proyek Saya', shortLabel: 'Proyek', icon: FolderKanban },
+  { id: 'contracts', label: 'Kontrak Digital', shortLabel: 'Kontrak', icon: FileSignature },
+  { id: 'progress', label: 'Progress Proyek', shortLabel: 'Progres', icon: TrendingUp },
+  { id: 'bim', label: 'BIM Viewer', shortLabel: 'BIM 3D', icon: Box },
+  { id: 'verification', label: 'Verifikasi Pekerjaan', shortLabel: 'Verifikasi', icon: ClipboardCheck },
+  { id: 'payments', label: 'Pembayaran', shortLabel: 'Bayar', icon: Wallet },
+  { id: 'transactions', label: 'Riwayat Transaksi', shortLabel: 'Transaksi', icon: History },
+  { id: 'reports', label: 'Laporan', shortLabel: 'Laporan', icon: BarChart3 },
+  { id: 'users', label: 'Pengguna', shortLabel: 'Pengguna', icon: Users },
+  { id: 'settings', label: 'Pengaturan', shortLabel: 'Setting', icon: Settings },
+  { id: 'help', label: 'Bantuan', shortLabel: 'Bantuan', icon: HelpCircle },
 ];
 
 export default function App() {
@@ -88,12 +100,58 @@ export default function App() {
     return INITIAL_DATABASE;
   });
 
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [appsScriptConfig, setAppsScriptConfig] = useState<AppsScriptConfig>(() => {
+    try {
+      const saved = localStorage.getItem(GAS_CONFIG_KEY);
+      if (saved) {
+        return { ...DEFAULT_APPS_SCRIPT_CONFIG, ...JSON.parse(saved) };
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return DEFAULT_APPS_SCRIPT_CONFIG;
+  });
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     return INITIAL_DATABASE.users[0];
   });
   const [activeMenu, setActiveMenu] = useState<MenuId>('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [loadingOverlay, setLoadingOverlay] = useState<{
+    visible: boolean;
+    message?: string;
+    subMessage?: string;
+  }>({ visible: false });
+
+  const triggerLoadingAnimation = (message?: string, subMessage?: string, durationMs = 650) => {
+    setLoadingOverlay({ visible: true, message, subMessage });
+    window.setTimeout(() => {
+      setLoadingOverlay({ visible: false });
+    }, durationMs);
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, String(isDarkMode));
+    } catch {
+      // ignore storage errors
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     try {
@@ -101,12 +159,32 @@ export default function App() {
     } catch {
       // ignore storage errors
     }
+
+    if (
+      appsScriptConfig.autoSync &&
+      isValidAppsScriptUrl(appsScriptConfig.webAppUrl)
+    ) {
+      void syncDatabaseToAppsScript(appsScriptConfig.webAppUrl, db);
+    }
   }, [db]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GAS_CONFIG_KEY, JSON.stringify(appsScriptConfig));
+    } catch {
+      // ignore storage errors
+    }
+  }, [appsScriptConfig]);
 
   // Ensure active menu is accessible when switching roles
   const handleRoleSwitch = (userId: string) => {
     const targetUser = db.users.find((u) => u.id === userId);
     if (!targetUser) return;
+    triggerLoadingAnimation(
+      `Mengaktifkan Peran ${getRoleLabel(targetUser.role)}...`,
+      `Memuat hak akses RBAC untuk ${targetUser.name}`,
+      500
+    );
     setCurrentUser(targetUser);
     if (!canAccessMenu(targetUser.role, activeMenu)) {
       setActiveMenu('dashboard');
@@ -225,7 +303,6 @@ export default function App() {
         ? prev.contracts.map((c) => (c.id === contract.id ? contract : c))
         : [contract, ...prev.contracts];
 
-      // Create milestones & payment schedules
       const otherMilestones = prev.contract_milestones.filter(
         (m) => m.contractId !== contract.id
       );
@@ -450,7 +527,6 @@ export default function App() {
         };
       });
 
-      // Recalculate overall project progress
       const projectMilestones = updatedMilestones.filter(
         (m) => m.projectId === targetVer.projectId
       );
@@ -469,7 +545,6 @@ export default function App() {
           : p
       );
 
-      // Update BIM object completion rate if linked
       const targetMs = updatedMilestones.find((m) => m.id === targetVer.milestoneId);
       const updatedBimModels = prev.bim_models.map((bm) => {
         if (bm.projectId !== targetVer.projectId) return bm;
@@ -491,7 +566,6 @@ export default function App() {
         };
       });
 
-      // Evaluate Smart Contract payment trigger
       const scConfig = prev.smart_contracts.find(
         (sc) => sc.projectId === targetVer.projectId
       );
@@ -512,7 +586,6 @@ export default function App() {
         };
       });
 
-      // Append Smart Contract execution log if approved
       const simHash = `0xSIMULATED_${Date.now().toString(16)}a8f4c2`;
       const updatedSmartContracts = prev.smart_contracts.map((sc) => {
         if (sc.projectId !== targetVer.projectId) return sc;
@@ -657,47 +730,67 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <AuthViews
-        users={db.users}
-        organizations={db.organizations}
-        onLogin={(user) => {
-          setCurrentUser(user);
-          setActiveMenu('dashboard');
-        }}
-        onRegister={(newUser, newOrgName) => {
-          const createdUser: User = {
-            ...newUser,
-            id: `usr-${Date.now()}`,
-            status: 'Aktif',
-            createdAt: new Date().toISOString().split('T')[0],
-          };
-          setDb((prev) => ({
-            ...prev,
-            users: [...prev.users, createdUser],
-            organizations: newOrgName
-              ? [
-                  ...prev.organizations,
-                  {
-                    id: createdUser.organizationId,
-                    name: newOrgName,
-                    type:
-                      createdUser.role === 'client'
-                        ? 'Owner / Client'
-                        : createdUser.role === 'contractor'
-                        ? 'Kontraktor Utama'
-                        : 'Konsultan Pengawas',
-                    npwp: '09.876.543.2-100.000',
-                    address: 'Indonesia',
-                    phone: createdUser.phone,
-                    verified: true,
-                  },
-                ]
-              : prev.organizations,
-          }));
-          setCurrentUser(createdUser);
-          setActiveMenu('dashboard');
-        }}
-      />
+      <>
+        {loadingOverlay.visible && (
+          <SmartBuildLoadingOverlay
+            title={loadingOverlay.message}
+            subtitle={loadingOverlay.subMessage}
+          />
+        )}
+        <AuthViews
+          users={db.users}
+          organizations={db.organizations}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={() => setIsDarkMode((d) => !d)}
+          onLogin={(user) => {
+            triggerLoadingAnimation(
+              `Menyiapkan Ruang Kerja ${user.name}...`,
+              'Menyinkronkan Model BIM 3D & Ledger Smart Contract',
+              650
+            );
+            setCurrentUser(user);
+            setActiveMenu('dashboard');
+          }}
+          onRegister={(newUser, newOrgName) => {
+            const createdUser: User = {
+              ...newUser,
+              id: `usr-${Date.now()}`,
+              status: 'Aktif',
+              createdAt: new Date().toISOString().split('T')[0],
+            };
+            setDb((prev) => ({
+              ...prev,
+              users: [...prev.users, createdUser],
+              organizations: newOrgName
+                ? [
+                    ...prev.organizations,
+                    {
+                      id: createdUser.organizationId,
+                      name: newOrgName,
+                      type:
+                        createdUser.role === 'client'
+                          ? 'Owner / Client'
+                          : createdUser.role === 'contractor'
+                          ? 'Kontraktor Utama'
+                          : 'Konsultan Pengawas',
+                      npwp: '09.876.543.2-100.000',
+                      address: 'Indonesia',
+                      phone: createdUser.phone,
+                      verified: true,
+                    },
+                  ]
+                : prev.organizations,
+            }));
+            triggerLoadingAnimation(
+              `Mendaftarkan Akun ${createdUser.name}...`,
+              'Menginisialisasi akses proyek & kontrak digital',
+              650
+            );
+            setCurrentUser(createdUser);
+            setActiveMenu('dashboard');
+          }}
+        />
+      </>
     );
   }
 
@@ -708,21 +801,43 @@ export default function App() {
     MENU_ITEMS.find((m) => m.id === activeMenu) || MENU_ITEMS[0];
   const unreadNotifCount = db.notifications.filter((n) => !n.read).length;
 
+  // Pick up to 5 key menus for mobile bottom bar
+  const mobileQuickMenus = visibleMenus.filter((m) =>
+    ['dashboard', 'projects', 'bim', 'verification', 'settings'].includes(m.id)
+  ).slice(0, 5);
+
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] text-slate-900">
+    <div className="min-h-screen flex bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {loadingOverlay.visible && (
+        <SmartBuildLoadingOverlay
+          title={loadingOverlay.message}
+          subtitle={loadingOverlay.subMessage}
+        />
+      )}
+
       {/* Desktop Sidebar Navigation */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-[#071D49] text-white shrink-0 border-r border-slate-800 no-print">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-[#071D49] dark:bg-slate-900 text-white shrink-0 border-r border-slate-800 no-print">
         <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#1264F4] flex items-center justify-center font-bold">
-            <Building2 className="w-5 h-5 text-white" />
+          <SmartBuildLogo className="w-8 h-8" />
+          <div>
+            <span className="text-lg font-bold tracking-tight whitespace-nowrap block leading-none">
+              SmartBuild
+            </span>
+            <span className="text-[10px] text-blue-300 font-medium tracking-wider uppercase">
+              BIM &amp; Smart Contract
+            </span>
           </div>
-          <span className="text-lg font-bold tracking-tight whitespace-nowrap">
-            SmartBuild
-          </span>
         </div>
 
         <div className="px-4 py-3 border-b border-white/10 text-xs">
-          <div className="text-slate-400">Akun &amp; Peran Aktif</div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Akun &amp; Peran Aktif</span>
+            {appsScriptConfig.connectionStatus === 'connected' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
+                <Cloud className="w-2.5 h-2.5" /> GAS DB
+              </span>
+            )}
+          </div>
           <div className="font-bold text-white truncate mt-0.5">{currentUser.name}</div>
           <div className="text-[#60A5FA] font-medium truncate">
             {getRoleLabel(currentUser.role)}
@@ -757,9 +872,24 @@ export default function App() {
         <div className="p-3 border-t border-white/10 space-y-2">
           <button
             type="button"
+            onClick={() =>
+              triggerLoadingAnimation(
+                'Menyinkronkan Mesin BIM 3D & Smart Contract...',
+                'Memeriksa integritas 18 tabel relational & Apps Script',
+                950
+              )
+            }
+            className="w-full px-3 py-2 rounded-lg border border-blue-400/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 text-xs font-medium flex items-center justify-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Efek Animasi Loading</span>
+          </button>
+          <button
+            type="button"
             onClick={() => {
               localStorage.removeItem(STORAGE_KEY);
               setDb(INITIAL_DATABASE);
+              triggerLoadingAnimation('Mereset Data Demo...', 'Mengembalikan data proyek Pembangunan Gedung Aula', 600);
             }}
             className="w-full px-3 py-2 rounded-lg border border-white/15 hover:bg-white/10 text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5"
           >
@@ -781,21 +911,48 @@ export default function App() {
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-900/60"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="relative w-64 bg-[#071D49] text-white flex flex-col z-10">
+          <aside className="relative w-72 max-w-[82vw] bg-[#071D49] dark:bg-slate-900 text-white flex flex-col z-10 shadow-2xl">
             <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-              <span className="text-lg font-bold">SmartBuild</span>
+              <div className="flex items-center gap-2.5">
+                <SmartBuildLogo className="w-7 h-7" />
+                <span className="text-lg font-bold">SmartBuild</span>
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(false)}
                 aria-label="Tutup menu navigasi"
+                className="p-1.5 rounded-lg hover:bg-white/10"
               >
                 <X className="w-5 h-5 text-slate-300" />
               </button>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+
+            {/* Mobile RBAC Switcher inside Drawer */}
+            <div className="px-4 py-3 border-b border-white/10 space-y-1.5 text-xs">
+              <label htmlFor="mobile-role-switch" className="text-slate-300 font-medium block">
+                Ganti Peran Simulasi (RBAC):
+              </label>
+              <select
+                id="mobile-role-switch"
+                value={currentUser.id}
+                onChange={(e) => {
+                  handleRoleSwitch(e.target.value);
+                  setMobileSidebarOpen(false);
+                }}
+                className="w-full px-2.5 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs font-semibold"
+              >
+                {db.users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {getRoleLabel(u.role)} — {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
               {visibleMenus.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeMenu === item.id;
@@ -819,42 +976,59 @@ export default function App() {
                 );
               })}
             </nav>
+
+            <div className="p-3 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  setCurrentUser(null);
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-red-600/80 text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Halaman Login</span>
+              </button>
+            </div>
           </aside>
         </div>
       )}
 
       {/* Main Content Workspace */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
         {/* Top Bar Contract for SaaS Dashboard */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between gap-6 sticky top-0 z-30 no-print">
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 no-print transition-colors">
           {/* Left Zone: Mobile Menu Trigger + Breadcrumb Trail */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-700"
+              className="lg:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-label="Buka menu navigasi"
             >
               <Menu className="w-4 h-4" />
             </button>
-            <div className="text-xs text-slate-500 truncate">
-              <span className="font-semibold text-[#071D49]">SmartBuild</span>
-              <span aria-hidden="true"> / </span>
-              <span className="font-semibold text-slate-900">{currentMenuMeta.label}</span>
+            <div className="lg:hidden shrink-0">
+              <SmartBuildLogo className="w-6 h-6" />
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              <span className="font-semibold text-[#071D49] dark:text-white hidden sm:inline">SmartBuild</span>
+              <span aria-hidden="true" className="hidden sm:inline"> / </span>
+              <span className="font-semibold text-slate-900 dark:text-white">{currentMenuMeta.label}</span>
             </div>
           </div>
 
-          {/* Right Zone: Role Switcher, Notifications & Logout */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden sm:flex items-center gap-2 text-xs">
-              <label htmlFor="header-role-switch" className="text-slate-500 font-medium whitespace-nowrap">
+          {/* Right Zone: Role Switcher, Dark Mode Toggle, Notifications & Logout */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <div className="hidden md:flex items-center gap-2 text-xs">
+              <label htmlFor="header-role-switch" className="text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
                 Simulasi Peran (RBAC):
               </label>
               <select
                 id="header-role-switch"
                 value={currentUser.id}
                 onChange={(e) => handleRoleSwitch(e.target.value)}
-                className="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-[#071D49]"
+                className="px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-[#071D49] dark:text-white"
               >
                 {db.users.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -864,21 +1038,43 @@ export default function App() {
               </select>
             </div>
 
+            {/* Dark / Light Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsDarkMode((d) => !d)}
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors whitespace-nowrap"
+              aria-label={isDarkMode ? 'Aktifkan Mode Terang' : 'Aktifkan Mode Malam'}
+              title={isDarkMode ? 'Mode Terang (Light)' : 'Mode Malam (Dark)'}
+            >
+              {isDarkMode ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Mode Terang</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-[#1264F4]" />
+                  <span className="hidden sm:inline">Mode Malam</span>
+                </>
+              )}
+            </button>
+
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowNotifPanel(!showNotifPanel)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 whitespace-nowrap"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 whitespace-nowrap"
                 aria-label="Panel Notifikasi"
               >
                 <Bell className="w-3.5 h-3.5 text-[#1264F4]" />
-                <span>Notifikasi ({unreadNotifCount})</span>
+                <span className="hidden sm:inline">Notifikasi</span>
+                <span>({unreadNotifCount})</span>
               </button>
 
               {showNotifPanel && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl p-4 z-50 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <span className="font-bold text-[#071D49]">Notifikasi Sistem</span>
+                <div className="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-[#071D49] dark:text-white">Notifikasi Sistem</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -892,11 +1088,11 @@ export default function App() {
                       Tandai Semua Dibaca
                     </button>
                   </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                     {db.notifications.slice(0, 6).map((n) => (
                       <div key={n.id} className="py-2 first:pt-0 last:pb-0">
-                        <div className="font-semibold text-slate-900">{n.title}</div>
-                        <p className="text-[11px] text-slate-600 mt-0.5">{n.message}</p>
+                        <div className="font-semibold text-slate-900 dark:text-white">{n.title}</div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">{n.message}</p>
                         <div className="text-[10px] text-slate-400 mt-0.5">
                           {n.category} · {n.createdAt}
                         </div>
@@ -910,7 +1106,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setCurrentUser(null)}
-              className="px-3 py-1.5 rounded-lg bg-[#071D49] hover:bg-slate-800 text-white text-xs font-semibold whitespace-nowrap shrink-0"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#071D49] dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white text-xs font-semibold whitespace-nowrap shrink-0"
             >
               Halaman Login
             </button>
@@ -918,7 +1114,7 @@ export default function App() {
         </header>
 
         {/* Main Viewport Content */}
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 max-w-7xl w-full mx-auto">
           {activeMenu === 'dashboard' && (
             <DashboardView
               db={db}
@@ -1028,8 +1224,17 @@ export default function App() {
 
           {activeMenu === 'settings' && (
             <SettingsView
+              db={db}
               currentUser={currentUser}
               systemSettings={db.system_settings}
+              appsScriptConfig={appsScriptConfig}
+              onUpdateAppsScriptConfig={(nextCfg) => setAppsScriptConfig(nextCfg)}
+              onReplaceDatabaseFromCloud={(cloudData) => {
+                setDb((prev) => ({
+                  ...prev,
+                  ...cloudData,
+                }));
+              }}
               onUpdateProfile={(updatedUser) => {
                 setCurrentUser(updatedUser);
                 setDb((prev) => ({
@@ -1051,6 +1256,32 @@ export default function App() {
           {activeMenu === 'help' && <HelpView />}
         </main>
       </div>
+
+      {/* Mobile Bottom Quick Navigation Bar for Smartphone Ergonomics */}
+      <nav
+        aria-label="Navigasi Cepat Mobile"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around no-print"
+      >
+        {mobileQuickMenus.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeMenu === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveMenu(item.id)}
+              className={`flex flex-col items-center justify-center px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${
+                isActive
+                  ? 'text-[#1264F4] dark:text-blue-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <Icon className="w-4 h-4 mb-0.5" />
+              <span>{item.shortLabel}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }

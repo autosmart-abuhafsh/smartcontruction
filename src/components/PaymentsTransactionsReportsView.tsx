@@ -8,13 +8,17 @@ import {
   Search,
   Eye,
   Plus,
-  Shield,
-  HelpCircle,
-  Settings,
-  Users,
   X,
   Info,
   Code2,
+  Database,
+  Copy,
+  Download,
+  RefreshCw,
+  CloudUpload,
+  CloudDownload,
+  Globe,
+  Check,
 } from 'lucide-react';
 import {
   PaymentSchedule,
@@ -30,6 +34,14 @@ import {
   formatRupiah,
   getRoleLabel,
 } from '../utils/calculations';
+import {
+  AppsScriptConfig,
+  CODE_GS_SOURCE,
+  SETUP_GS_SOURCE,
+  pullDatabaseFromAppsScript,
+  syncDatabaseToAppsScript,
+  testAppsScriptConnection,
+} from '../services/appsScriptService';
 
 /* ============================================================================
  * MODUL G & H: SMART CONTRACT & MANAJEMEN PEMBAYARAN
@@ -62,25 +74,25 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Manajemen Pembayaran Termin &amp; Smart Contract
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Otomatisasi perhitungan termin berdasarkan persentase tahapan kontrak dan status
             verifikasi pekerjaan (Mode Simulasi Fungsional MVP - DEMO).
           </p>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('payments')}
             className={`px-3.5 py-2 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
               activeTab === 'payments'
-                ? 'bg-white text-[#071D49] shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-[#071D49] dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Wallet className="w-3.5 h-3.5" />
@@ -91,8 +103,8 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
             onClick={() => setActiveTab('smart_contract')}
             className={`px-3.5 py-2 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
               activeTab === 'smart_contract'
-                ? 'bg-white text-[#071D49] shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-[#071D49] dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
@@ -102,10 +114,12 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
       </div>
 
       {/* Important Simulation Safety Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900">
+      <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
         <Info className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold">Pemberitahuan Simulasi Pembayaran &amp; Smart Contract (DEMO):</span>{' '}
+          <span className="font-bold">
+            Pemberitahuan Simulasi Pembayaran &amp; Smart Contract (DEMO):
+          </span>{' '}
           Seluruh transaksi pada tahap MVP ini merupakan simulasi logika fungsional tanpa
           menggunakan uang sungguhan dan belum dikirim ke mainnet Blockchain publik. Service
           interface Solidity telah disiapkan terpisah untuk integrasi testnet/production pada Tahap 2.
@@ -115,13 +129,13 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
       {feedback && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between"
+          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
         >
           <span>{feedback}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="font-bold text-emerald-700"
+            className="font-bold text-emerald-700 dark:text-emerald-300"
             aria-label="Tutup pesan pembayaran"
           >
             <X className="w-4 h-4" />
@@ -131,15 +145,15 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
 
       {activeTab === 'payments' ? (
         <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="text-xs font-semibold text-slate-700">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               Daftar Termin Pembayaran Berdasarkan Persentase Kontrak
             </div>
             <select
               aria-label="Filter proyek pembayaran"
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold border border-slate-300 rounded-lg bg-white"
+              className="px-3 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="ALL">Semua Proyek ({db.payment_schedules.length} Termin)</option>
               {db.projects.map((p) => (
@@ -150,11 +164,11 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
             </select>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                  <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                     <th className="py-3 px-4 font-semibold">Termin &amp; Proyek</th>
                     <th className="py-3 px-4 font-semibold">Tahapan Pekerjaan</th>
                     <th className="py-3 px-4 font-semibold text-right">Persentase</th>
@@ -164,40 +178,45 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                     <th className="py-3 px-4 font-semibold text-right">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredSchedules.map((sch) => (
-                    <tr key={sch.id} className="hover:bg-slate-50/80">
+                    <tr
+                      key={sch.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
+                    >
                       <td className="py-3.5 px-4">
-                        <div className="font-mono text-[11px] text-slate-500">
+                        <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
                           Termin #{sch.termNumber} · {sch.isDemo ? 'DEMO' : 'LIVE'}
                         </div>
-                        <div className="font-bold text-[#071D49] mt-0.5">{sch.projectName}</div>
+                        <div className="font-bold text-[#071D49] dark:text-white mt-0.5">
+                          {sch.projectName}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-800">
+                      <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-100">
                         {sch.milestoneName}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1264F4] tabular-nums">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                         {sch.percentage}%
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
                         {formatRupiah(sch.nominal)}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`font-bold ${
+                          className={`font-bold whitespace-nowrap ${
                             sch.status === 'Berhasil'
                               ? 'text-[#10B981]'
                               : sch.status === 'Siap dibayarkan'
-                              ? 'text-[#1264F4]'
+                              ? 'text-[#1264F4] dark:text-blue-400'
                               : sch.status === 'Menunggu verifikasi'
                               ? 'text-[#F59E0B]'
-                              : 'text-slate-500'
+                              : 'text-slate-500 dark:text-slate-400'
                           }`}
                         >
                           {sch.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400">
                         {sch.txHash ? (
                           <div>
                             <div className="truncate max-w-[160px]">{sch.txHash}</div>
@@ -214,7 +233,7 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                           <button
                             type="button"
                             onClick={() => setSelectedPaymentDetail(sch)}
-                            className="px-2.5 py-1.5 rounded-md border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium inline-flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium inline-flex items-center gap-1"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Detail</span>
@@ -224,7 +243,7 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                             <button
                               type="button"
                               onClick={() => setConfirmExecutePayment(sch)}
-                              className="px-3 py-1.5 rounded-md bg-[#10B981] hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-md bg-[#10B981] hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1 whitespace-nowrap"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Proses Pembayaran (DEMO)</span>
@@ -245,14 +264,14 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
           {db.smart_contracts.map((sc) => (
             <div
               key={sc.id}
-              className="bg-white border border-slate-200 rounded-xl p-5 space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4"
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-200">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div>
-                  <div className="text-xs font-mono text-slate-500">
+                  <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                     ID Konfigurasi: {sc.id} · Kontrak: {sc.contractId}
                   </div>
-                  <h2 className="text-base font-bold text-[#071D49] mt-0.5">
+                  <h2 className="text-base font-bold text-[#071D49] dark:text-white mt-0.5">
                     Smart Contract Escrow Engine — {sc.projectName}
                   </h2>
                 </div>
@@ -261,26 +280,32 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs">
                 <div>
-                  <div className="text-slate-500">Alamat Kontrak Simulasi</div>
-                  <div className="font-mono font-bold text-slate-900 mt-0.5">
+                  <div className="text-slate-500 dark:text-slate-400">Alamat Kontrak Simulasi</div>
+                  <div className="font-mono font-bold text-slate-900 dark:text-white mt-0.5">
                     {sc.contractAddress}
                   </div>
                 </div>
                 <div>
-                  <div className="text-slate-500">Jaringan Blockchain</div>
-                  <div className="font-semibold text-[#1264F4] mt-0.5">{sc.networkName}</div>
+                  <div className="text-slate-500 dark:text-slate-400">Jaringan Blockchain</div>
+                  <div className="font-semibold text-[#1264F4] dark:text-blue-400 mt-0.5">
+                    {sc.networkName}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-slate-500">Transaction Hash Terakhir (Simulasi)</div>
-                  <div className="font-mono text-slate-800 truncate mt-0.5">{sc.lastTxHash}</div>
+                  <div className="text-slate-500 dark:text-slate-400">
+                    Transaction Hash Terakhir (Simulasi)
+                  </div>
+                  <div className="font-mono text-slate-800 dark:text-slate-200 truncate mt-0.5">
+                    {sc.lastTxHash}
+                  </div>
                 </div>
               </div>
 
               {/* Aturan Otomatisasi */}
               <div className="flex flex-wrap items-center justify-between gap-4 text-xs pt-1">
-                <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sc.autoReleaseOnVerification}
@@ -299,14 +324,14 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                   </span>
                 </label>
 
-                <span className="font-mono text-[11px] text-slate-500">
+                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
                   Adapter Interface: ISmartBuildEscrowAdapter v1.0 (Solidity Ready)
                 </span>
               </div>
 
               {/* Riwayat Eksekusi Smart Contract */}
-              <div className="border-t border-slate-200 pt-3">
-                <div className="text-xs font-bold text-[#071D49] mb-2 flex items-center gap-1.5">
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                <div className="text-xs font-bold text-[#071D49] dark:text-white mb-2 flex items-center gap-1.5">
                   <Code2 className="w-4 h-4 text-[#1264F4]" />
                   <span>Riwayat Eksekusi Event Smart Contract (Log Simulasi)</span>
                 </div>
@@ -314,7 +339,7 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
                   {sc.executionLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="p-3 rounded-lg bg-slate-900 text-slate-100 font-mono text-xs space-y-1"
+                      className="p-3 rounded-lg bg-slate-900 dark:bg-slate-950 text-slate-100 font-mono text-xs space-y-1 border border-slate-800"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
                         <span>{log.timestamp}</span>
@@ -339,66 +364,70 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full p-6 shadow-xl space-y-4 text-xs">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-lg w-full p-6 shadow-xl space-y-4 text-xs">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className="font-mono text-slate-500">
+                <div className="font-mono text-slate-500 dark:text-slate-400">
                   DETAIL TERMIN PEMBAYARAN · Termin #{selectedPaymentDetail.termNumber} · DEMO
                 </div>
-                <h2 className="text-base font-bold text-[#071D49] mt-0.5">
+                <h2 className="text-base font-bold text-[#071D49] dark:text-white mt-0.5">
                   {selectedPaymentDetail.milestoneName}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedPaymentDetail(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup detail pembayaran"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-2.5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div className="space-y-2.5 bg-slate-50 dark:bg-slate-800/70 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
               <div className="flex justify-between">
-                <span className="text-slate-500">Nama Proyek:</span>
-                <span className="font-bold text-slate-900">{selectedPaymentDetail.projectName}</span>
+                <span className="text-slate-500 dark:text-slate-400">Nama Proyek:</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {selectedPaymentDetail.projectName}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Persentase Tahapan:</span>
-                <span className="font-mono font-bold text-slate-900 tabular-nums">
+                <span className="text-slate-500 dark:text-slate-400">Persentase Tahapan:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white tabular-nums">
                   {selectedPaymentDetail.percentage}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Nominal Pembayaran:</span>
-                <span className="font-mono font-bold text-[#1264F4] text-sm tabular-nums">
+                <span className="text-slate-500 dark:text-slate-400">Nominal Pembayaran:</span>
+                <span className="font-mono font-bold text-[#1264F4] dark:text-blue-400 text-sm tabular-nums">
                   {formatRupiah(selectedPaymentDetail.nominal)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status Saat Ini:</span>
-                <span className="font-bold text-slate-900">{selectedPaymentDetail.status}</span>
+                <span className="text-slate-500 dark:text-slate-400">Status Saat Ini:</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {selectedPaymentDetail.status}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Bukti Referensi:</span>
-                <span className="font-mono text-slate-700">
+                <span className="text-slate-500 dark:text-slate-400">Bukti Referensi:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">
                   {selectedPaymentDetail.proofRef || 'Belum diterbitkan'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Simulasi Tx Hash:</span>
-                <span className="font-mono text-slate-700 truncate max-w-[220px]">
+                <span className="text-slate-500 dark:text-slate-400">Simulasi Tx Hash:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 truncate max-w-[220px]">
                   {selectedPaymentDetail.txHash || '-'}
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-200">
+            <div className="flex justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setSelectedPaymentDetail(null)}
-                className="px-4 py-2 rounded-lg bg-[#071D49] text-white font-semibold"
+                className="px-4 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 text-white font-semibold"
               >
                 Tutup
               </button>
@@ -414,29 +443,29 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4 text-xs">
-            <h2 className="text-base font-bold text-[#071D49]">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-xl space-y-4 text-xs">
+            <h2 className="text-base font-bold text-[#071D49] dark:text-white">
               Konfirmasi Pencairan Termin Simulasi (DEMO)
             </h2>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
               Anda akan menjalankan simulasi pencairan Smart Contract untuk{' '}
               <strong>{confirmExecutePayment.milestoneName}</strong> pada proyek{' '}
               <strong>{confirmExecutePayment.projectName}</strong> sebesar{' '}
-              <strong className="font-mono text-[#1264F4]">
+              <strong className="font-mono text-[#1264F4] dark:text-blue-400">
                 {formatRupiah(confirmExecutePayment.nominal)}
               </strong>
               .
             </p>
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300">
               Tindakan ini akan mencatat bukti transaksi simulasi (DEMO), membuat hash transaksi
               simulasi baru, dan memperbarui saldo pembayaran pada Dashboard serta Riwayat
               Transaksi.
             </div>
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setConfirmExecutePayment(null)}
-                className="px-4 py-2 rounded-lg border border-slate-300 font-semibold text-slate-700"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300"
               >
                 Batal
               </button>
@@ -525,12 +554,12 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Riwayat Transaksi &amp; Jejak Audit Pembayaran (DEMO)
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Daftar lengkap pencairan termin pembayaran simulasi beserta pengirim, penerima, nominal,
             dan hash transaksi.
           </p>
@@ -540,7 +569,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Export PDF</span>
@@ -548,7 +577,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
           <button
             type="button"
             onClick={handleExportExcelCsv}
-            className="px-3.5 py-2 rounded-lg bg-[#071D49] hover:bg-slate-800 text-xs font-semibold text-white flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-xs font-semibold text-white flex items-center gap-1.5"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Export Excel (CSV)</span>
@@ -557,7 +586,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs no-print">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs no-print">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -566,7 +595,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari ID transaksi, tahapan, tx hash..."
-            className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg"
+            className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
           />
         </div>
         <div>
@@ -574,7 +603,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
             aria-label="Filter proyek transaksi"
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           >
             <option value="ALL">Semua Proyek</option>
             {db.projects.map((p) => (
@@ -589,7 +618,7 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
             aria-label="Filter status transaksi"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           >
             <option value="ALL">Semua Status Transaksi</option>
             <option value="Berhasil (DEMO)">Berhasil (DEMO)</option>
@@ -603,16 +632,16 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
             aria-label="Filter tanggal transaksi"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
           />
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                 <th className="py-3 px-4 font-semibold">ID Transaksi &amp; Tanggal</th>
                 <th className="py-3 px-4 font-semibold">Proyek &amp; Tahapan</th>
                 <th className="py-3 px-4 font-semibold">Pengirim &rarr; Penerima</th>
@@ -621,38 +650,50 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
                 <th className="py-3 px-4 font-semibold">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400">
                     Tidak ada transaksi yang sesuai filter.
                   </td>
                 </tr>
               ) : (
                 filteredTransactions.map((trx) => (
-                  <tr key={trx.id} className="hover:bg-slate-50/80">
+                  <tr key={trx.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
                     <td className="py-3.5 px-4">
-                      <div className="font-mono font-bold text-[#071D49]">{trx.id}</div>
-                      <div className="text-[11px] text-slate-500">{formatDateID(trx.date)}</div>
+                      <div className="font-mono font-bold text-[#071D49] dark:text-blue-300">
+                        {trx.id}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {formatDateID(trx.date)}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900">{trx.projectName}</div>
-                      <div className="text-[11px] text-slate-500">{trx.milestoneName}</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        {trx.projectName}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {trx.milestoneName}
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-700">
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
                       <div>Dari: {trx.sender}</div>
-                      <div className="text-[11px] text-slate-500">Ke: {trx.receiver}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Ke: {trx.receiver}
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
                       {formatRupiah(trx.nominal)}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="text-slate-700">{trx.paymentMethod}</div>
+                      <div className="text-slate-700 dark:text-slate-300">{trx.paymentMethod}</div>
                       <div className="font-mono text-[11px] text-slate-400 truncate max-w-[180px]">
                         {trx.txHash}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-[#10B981]">{trx.status}</td>
+                    <td className="py-3.5 px-4 font-bold text-[#10B981] whitespace-nowrap">
+                      {trx.status}
+                    </td>
                   </tr>
                 ))
               )}
@@ -687,12 +728,12 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Pusat Laporan &amp; Evaluasi Proyek Konstruksi
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Rekapitulasi data proyek, kontrak, realisasi progres, verifikasi pengawas, dan
             pembayaran termin berdasarkan filter proyek serta periode.
           </p>
@@ -708,8 +749,8 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
       </div>
 
       {/* Report Category Selector & Filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-lg">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
           {reportTabs.map((tab) => (
             <button
               key={tab.id}
@@ -717,8 +758,8 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
               onClick={() => setReportType(tab.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                 reportType === tab.id
-                  ? 'bg-white text-[#071D49] shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-[#071D49] dark:text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {tab.label}
@@ -728,14 +769,17 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
           <div>
-            <label htmlFor="rep-filter-prj" className="block font-semibold text-slate-600 mb-1">
+            <label
+              htmlFor="rep-filter-prj"
+              className="block font-semibold text-slate-600 dark:text-slate-300 mb-1"
+            >
               Filter Proyek:
             </label>
             <select
               id="rep-filter-prj"
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="ALL">Semua Proyek</option>
               {db.projects.map((p) => (
@@ -746,7 +790,10 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
             </select>
           </div>
           <div>
-            <label htmlFor="rep-period-start" className="block font-semibold text-slate-600 mb-1">
+            <label
+              htmlFor="rep-period-start"
+              className="block font-semibold text-slate-600 dark:text-slate-300 mb-1"
+            >
               Periode Mulai:
             </label>
             <input
@@ -754,11 +801,14 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
               type="date"
               value={periodStart}
               onChange={(e) => setPeriodStart(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
             />
           </div>
           <div>
-            <label htmlFor="rep-period-end" className="block font-semibold text-slate-600 mb-1">
+            <label
+              htmlFor="rep-period-end"
+              className="block font-semibold text-slate-600 dark:text-slate-300 mb-1"
+            >
               Periode Akhir:
             </label>
             <input
@@ -766,22 +816,22 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
               type="date"
               value={periodEnd}
               onChange={(e) => setPeriodEnd(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
             />
           </div>
         </div>
       </div>
 
       {/* Dynamic Report Table Content */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
-        <h2 className="text-base font-bold text-[#071D49] mb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 overflow-x-auto">
+        <h2 className="text-base font-bold text-[#071D49] dark:text-white mb-4">
           {reportTabs.find((t) => t.id === reportType)?.label} (DEMO)
         </h2>
 
         {reportType === 'proyek' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">Kode &amp; Nama Proyek</th>
                 <th className="py-2.5 px-3">Pengguna Jasa</th>
                 <th className="py-2.5 px-3">Kontraktor</th>
@@ -790,12 +840,12 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.projects
                 .filter((p) => selectedProjectId === 'ALL' || p.id === selectedProjectId)
                 .map((p) => (
                   <tr key={p.id}>
-                    <td className="py-3 pr-3 font-semibold text-slate-900">
+                    <td className="py-3 pr-3 font-semibold text-slate-900 dark:text-white">
                       {p.code} — {p.name}
                     </td>
                     <td className="py-3 px-3">{p.clientName}</td>
@@ -803,7 +853,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                     <td className="py-3 px-3 text-right font-mono tabular-nums">
                       {formatRupiah(p.contractValue)}
                     </td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-[#1264F4] tabular-nums">
+                    <td className="py-3 px-3 text-right font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                       {p.overallProgress}%
                     </td>
                     <td className="py-3 pl-3 font-semibold">{p.status}</td>
@@ -816,7 +866,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
         {reportType === 'progres' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">Proyek</th>
                 <th className="py-2.5 px-3">Tahapan</th>
                 <th className="py-2.5 px-3 text-right">Bobot</th>
@@ -824,7 +874,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status Tahapan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.contract_milestones
                 .filter((m) => selectedProjectId === 'ALL' || m.projectId === selectedProjectId)
                 .map((m) => (
@@ -838,7 +888,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                     <td className="py-3 px-3 text-right font-mono tabular-nums">
                       {m.weightPercentage}%
                     </td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-[#1264F4] tabular-nums">
+                    <td className="py-3 px-3 text-right font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                       {m.realizedProgress}%
                     </td>
                     <td className="py-3 pl-3 font-semibold">{m.status}</td>
@@ -851,7 +901,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
         {reportType === 'kontrak' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">Nomor Kontrak</th>
                 <th className="py-2.5 px-3">Nama Proyek</th>
                 <th className="py-2.5 px-3 text-right">Nilai Total</th>
@@ -859,7 +909,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.contracts
                 .filter((c) => selectedProjectId === 'ALL' || c.projectId === selectedProjectId)
                 .map((c) => (
@@ -883,7 +933,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
         {reportType === 'pembayaran' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">Proyek</th>
                 <th className="py-2.5 px-3">Termin Tahapan</th>
                 <th className="py-2.5 px-3 text-right">Persentase</th>
@@ -891,14 +941,16 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status Pembayaran</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.payment_schedules
                 .filter((s) => selectedProjectId === 'ALL' || s.projectId === selectedProjectId)
                 .map((s) => (
                   <tr key={s.id}>
                     <td className="py-3 pr-3 font-semibold">{s.projectName}</td>
                     <td className="py-3 px-3">{s.milestoneName}</td>
-                    <td className="py-3 px-3 text-right font-mono tabular-nums">{s.percentage}%</td>
+                    <td className="py-3 px-3 text-right font-mono tabular-nums">
+                      {s.percentage}%
+                    </td>
                     <td className="py-3 px-3 text-right font-mono font-bold tabular-nums">
                       {formatRupiah(s.nominal)}
                     </td>
@@ -912,7 +964,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
         {reportType === 'transaksi' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">ID Transaksi</th>
                 <th className="py-2.5 px-3">Tanggal</th>
                 <th className="py-2.5 px-3">Proyek &amp; Termin</th>
@@ -920,7 +972,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.transactions
                 .filter((t) => selectedProjectId === 'ALL' || t.projectId === selectedProjectId)
                 .map((t) => (
@@ -943,7 +995,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
         {reportType === 'verifikasi' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-2.5 pr-3">ID Verifikasi</th>
                 <th className="py-2.5 px-3">Proyek &amp; Tahapan</th>
                 <th className="py-2.5 px-3">Verifikator</th>
@@ -951,7 +1003,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
                 <th className="py-2.5 pl-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {db.verifications
                 .filter((v) => selectedProjectId === 'ALL' || v.projectId === selectedProjectId)
                 .map((v) => (
@@ -976,7 +1028,7 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
 };
 
 /* ============================================================================
- * MODUL PENGGUNA, PENGATURAN (PROFIL & SISTEM) & BANTUAN
+ * MODUL PENGGUNA, PENGATURAN (PROFIL, SISTEM, APPS SCRIPT & VERCEL) & BANTUAN
  * ========================================================================== */
 
 interface UsersManagementViewProps {
@@ -1018,12 +1070,12 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Manajemen Pengguna &amp; Organisasi (RBAC)
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Kelola hak akses pengguna platform, perusahaan terdaftar, dan peran Role-Based Access
             Control.
           </p>
@@ -1031,7 +1083,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         <button
           type="button"
           onClick={() => setShowAdd(!showAdd)}
-          className="px-4 py-2 rounded-lg bg-[#1264F4] text-white text-xs font-semibold flex items-center gap-1.5"
+          className="px-4 py-2 rounded-lg bg-[#1264F4] text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Pengguna</span>
@@ -1041,10 +1093,13 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       {showAdd && (
         <form
           onSubmit={handleCreate}
-          className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs"
         >
           <div>
-            <label htmlFor="usr-new-name" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="usr-new-name"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Nama Lengkap
             </label>
             <input
@@ -1052,12 +1107,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
               required
             />
           </div>
           <div>
-            <label htmlFor="usr-new-email" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="usr-new-email"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Alamat Email
             </label>
             <input
@@ -1065,19 +1123,22 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
               required
             />
           </div>
           <div>
-            <label htmlFor="usr-new-role" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="usr-new-role"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Peran (Role)
             </label>
             <select
               id="usr-new-role"
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
             >
               <option value="client">Pengguna Jasa (Owner)</option>
               <option value="contractor">Penyedia Jasa (Kontraktor)</option>
@@ -1086,7 +1147,10 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
             </select>
           </div>
           <div>
-            <label htmlFor="usr-new-org" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="usr-new-org"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Organisasi / Perusahaan
             </label>
             <input
@@ -1094,11 +1158,14 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="text"
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
           <div>
-            <label htmlFor="usr-new-pos" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="usr-new-pos"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Jabatan
             </label>
             <input
@@ -1106,13 +1173,13 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="text"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-[#071D49] text-white font-semibold rounded-lg"
+              className="w-full py-2 px-4 bg-[#071D49] dark:bg-blue-600 text-white font-semibold rounded-lg"
             >
               Simpan Pengguna
             </button>
@@ -1120,10 +1187,10 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         </form>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
               <th className="py-3 px-4">Nama &amp; Email</th>
               <th className="py-3 px-4">Peran (RBAC)</th>
               <th className="py-3 px-4">Organisasi &amp; Jabatan</th>
@@ -1131,26 +1198,28 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               <th className="py-3 px-4 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {db.users.map((u) => (
               <tr key={u.id}>
                 <td className="py-3.5 px-4">
-                  <div className="font-bold text-[#071D49]">{u.name}</div>
-                  <div className="text-[11px] text-slate-500">{u.email}</div>
+                  <div className="font-bold text-[#071D49] dark:text-white">{u.name}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{u.email}</div>
                 </td>
-                <td className="py-3.5 px-4 font-semibold text-[#1264F4]">
+                <td className="py-3.5 px-4 font-semibold text-[#1264F4] dark:text-blue-400">
                   {getRoleLabel(u.role)}
                 </td>
                 <td className="py-3.5 px-4">
-                  <div className="font-medium text-slate-800">{u.organizationName}</div>
-                  <div className="text-[11px] text-slate-500">{u.position}</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-200">
+                    {u.organizationName}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{u.position}</div>
                 </td>
                 <td className="py-3.5 px-4 font-bold text-[#10B981]">{u.status}</td>
                 <td className="py-3.5 px-4 text-right">
                   <button
                     type="button"
                     onClick={() => onToggleUserStatus(u.id)}
-                    className="px-2.5 py-1 rounded border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
+                    className="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium"
                   >
                     {u.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
                   </button>
@@ -1165,15 +1234,23 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 };
 
 interface SettingsViewProps {
+  db: SmartBuildDatabase;
   currentUser: User;
   systemSettings: SystemSettings;
+  appsScriptConfig: AppsScriptConfig;
+  onUpdateAppsScriptConfig: (next: AppsScriptConfig) => void;
+  onReplaceDatabaseFromCloud: (cloudData: Partial<SmartBuildDatabase>) => void;
   onUpdateProfile: (updated: User) => void;
   onUpdateSystemSettings: (updated: SystemSettings) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
+  db,
   currentUser,
   systemSettings,
+  appsScriptConfig,
+  onUpdateAppsScriptConfig,
+  onReplaceDatabaseFromCloud,
   onUpdateProfile,
   onUpdateSystemSettings,
 }) => {
@@ -1184,22 +1261,293 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [rpcEndpoint, setRpcEndpoint] = useState(systemSettings.blockchainRpcAdapter);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
+  // Apps Script Integration state
+  const [gasUrl, setGasUrl] = useState(appsScriptConfig.webAppUrl);
+  const [autoSync, setAutoSync] = useState(appsScriptConfig.autoSync);
+  const [activeCodeFile, setActiveCodeFile] = useState<'code.gs' | 'setup.gs'>('code.gs');
+  const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const [isTestingGas, setIsTestingGas] = useState(false);
+
+  const handleCopyCode = (fileName: 'code.gs' | 'setup.gs') => {
+    const content = fileName === 'code.gs' ? CODE_GS_SOURCE : SETUP_GS_SOURCE;
+    navigator.clipboard?.writeText(content);
+    setCopiedFile(fileName);
+    setTimeout(() => setCopiedFile(null), 2500);
+  };
+
+  const handleDownloadCode = (fileName: 'code.gs' | 'setup.gs') => {
+    const content = fileName === 'code.gs' ? CODE_GS_SOURCE : SETUP_GS_SOURCE;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingGas(true);
+    const res = await testAppsScriptConnection(gasUrl);
+    setIsTestingGas(false);
+    onUpdateAppsScriptConfig({
+      ...appsScriptConfig,
+      webAppUrl: gasUrl.trim(),
+      autoSync,
+      connectionStatus: res.ok ? 'connected' : 'error',
+      lastMessage: res.message,
+    });
+  };
+
+  const handlePushToSheets = async () => {
+    setIsTestingGas(true);
+    const res = await syncDatabaseToAppsScript(gasUrl, db);
+    setIsTestingGas(false);
+    onUpdateAppsScriptConfig({
+      ...appsScriptConfig,
+      webAppUrl: gasUrl.trim(),
+      autoSync,
+      lastSyncedAt: res.timestamp || appsScriptConfig.lastSyncedAt,
+      connectionStatus: res.ok ? 'connected' : 'error',
+      lastMessage: res.message,
+    });
+  };
+
+  const handlePullFromSheets = async () => {
+    setIsTestingGas(true);
+    const res = await pullDatabaseFromAppsScript(gasUrl);
+    setIsTestingGas(false);
+    if (res.ok && res.data) {
+      onReplaceDatabaseFromCloud(res.data);
+    }
+    onUpdateAppsScriptConfig({
+      ...appsScriptConfig,
+      webAppUrl: gasUrl.trim(),
+      autoSync,
+      lastSyncedAt: res.ok ? new Date().toISOString() : appsScriptConfig.lastSyncedAt,
+      connectionStatus: res.ok ? 'connected' : 'error',
+      lastMessage: res.message,
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
-        <h1 className="text-xl font-bold text-[#071D49]">
-          Pengaturan Profil Pengguna &amp; Konfigurasi Sistem
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5">
+        <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
+          Pengaturan Sistem, Database Google Apps Script &amp; Deployment Vercel
         </h1>
-        <p className="text-xs text-slate-600 mt-0.5">
-          Kelola identitas akun pengguna aktif serta parameter adapter integrasi BIM dan Blockchain.
+        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+          Konfigurasi database Google Sheets berbasis Apps Script (`code.gs` &amp; `setup.gs`),
+          integrasi Vercel (`vercel.app`), serta profil pengguna.
         </p>
       </div>
 
       {savedMsg && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+        <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200">
           {savedMsg}
         </div>
       )}
+
+      {/* GOOGLE APPS SCRIPT DATABASE CONFIGURATION & CODE GENERATOR */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-6 space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#1264F4]/10 text-[#1264F4] flex items-center justify-center shrink-0">
+              <Database className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#071D49] dark:text-white">
+                Server Database Google Apps Script (`code.gs` &amp; `setup.gs`)
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Hubungkan aplikasi SmartBuild dengan Google Spreadsheet sebagai database cloud
+                menggunakan 2 file script di bawah.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-xs font-mono">
+            Status:{' '}
+            <strong
+              className={
+                appsScriptConfig.connectionStatus === 'connected'
+                  ? 'text-[#10B981]'
+                  : appsScriptConfig.connectionStatus === 'error'
+                  ? 'text-red-500'
+                  : 'text-[#1264F4] dark:text-blue-400'
+              }
+            >
+              {appsScriptConfig.connectionStatus.toUpperCase()}
+            </strong>
+          </div>
+        </div>
+
+        {/* Web App URL Form & Sync Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end text-xs">
+          <div className="lg:col-span-7">
+            <label
+              htmlFor="gas-webapp-url"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Google Apps Script Web App URL (`https://script.google.com/macros/s/.../exec`)
+            </label>
+            <input
+              id="gas-webapp-url"
+              type="url"
+              value={gasUrl}
+              onChange={(e) => setGasUrl(e.target.value)}
+              placeholder="https://script.google.com/macros/s/AKfycbz.../exec"
+              className="w-full px-3.5 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-mono text-xs"
+            />
+          </div>
+
+          <div className="lg:col-span-5 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={isTestingGas}
+              onClick={() => {
+                onUpdateAppsScriptConfig({
+                  ...appsScriptConfig,
+                  webAppUrl: gasUrl.trim(),
+                  autoSync,
+                  lastMessage: 'Konfigurasi URL Google Apps Script disimpan.',
+                });
+                setSavedMsg('Konfigurasi Google Apps Script berhasil disimpan.');
+              }}
+              className="px-3.5 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold"
+            >
+              Simpan URL
+            </button>
+            <button
+              type="button"
+              disabled={isTestingGas}
+              onClick={handleTestConnection}
+              className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isTestingGas ? 'animate-spin' : ''}`} />
+              <span>Uji Koneksi</span>
+            </button>
+            <button
+              type="button"
+              disabled={isTestingGas}
+              onClick={handlePushToSheets}
+              className="px-3.5 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5"
+            >
+              <CloudUpload className="w-3.5 h-3.5" />
+              <span>Push 18 Tabel</span>
+            </button>
+            <button
+              type="button"
+              disabled={isTestingGas}
+              onClick={handlePullFromSheets}
+              className="px-3.5 py-2 rounded-lg bg-[#10B981] hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5"
+            >
+              <CloudDownload className="w-3.5 h-3.5" />
+              <span>Pull Data</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs">
+          <label className="flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoSync}
+              onChange={(e) => {
+                setAutoSync(e.target.checked);
+                onUpdateAppsScriptConfig({
+                  ...appsScriptConfig,
+                  webAppUrl: gasUrl.trim(),
+                  autoSync: e.target.checked,
+                });
+              }}
+              className="rounded border-slate-300"
+            />
+            <span>Sinkronisasi Otomatis (Auto-Sync) ke Google Apps Script setiap perubahan data</span>
+          </label>
+          <span className="text-slate-500 dark:text-slate-400">{appsScriptConfig.lastMessage}</span>
+        </div>
+
+        {/* Code Viewer for code.gs and setup.gs */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => setActiveCodeFile('code.gs')}
+                className={`px-3.5 py-1.5 text-xs font-mono font-bold rounded-md transition-colors ${
+                  activeCodeFile === 'code.gs'
+                    ? 'bg-[#1264F4] text-white'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                1. code.gs (REST API Backend)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveCodeFile('setup.gs')}
+                className={`px-3.5 py-1.5 text-xs font-mono font-bold rounded-md transition-colors ${
+                  activeCodeFile === 'setup.gs'
+                    ? 'bg-[#1264F4] text-white'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                2. setup.gs (18 Tabel Schema Setup)
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleCopyCode(activeCodeFile)}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
+              >
+                {copiedFile === activeCodeFile ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[#10B981]" />
+                    <span>Tersalin!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Salin {activeCodeFile}</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDownloadCode(activeCodeFile)}
+                className="px-3 py-1.5 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh {activeCodeFile}</span>
+              </button>
+            </div>
+          </div>
+
+          <pre className="p-4 rounded-xl bg-slate-950 text-slate-100 font-mono text-[11px] leading-relaxed overflow-x-auto max-h-72 border border-slate-800">
+            <code>{activeCodeFile === 'code.gs' ? CODE_GS_SOURCE : SETUP_GS_SOURCE}</code>
+          </pre>
+        </div>
+      </div>
+
+      {/* VERCEL DEPLOYMENT READINESS PANEL */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3 text-xs">
+        <div className="flex items-center gap-2.5 text-[#071D49] dark:text-white">
+          <Globe className="w-5 h-5 text-[#1264F4]" />
+          <h2 className="text-base font-bold">
+            Integrasi Deployment `vercel.app` (`vercel.json` Terkonfigurasi)
+          </h2>
+        </div>
+        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+          Proyek ini telah dilengkapi konfigurasi <code>/vercel.json</code>, aset logo pencarian{' '}
+          <code>/public/smartbuild-logo.svg</code>, serta <code>/public/favicon.svg</code> sehingga
+          siap langsung di-publish ke <strong>vercel.app</strong> melalui GitHub repository atau
+          perintah CLI <code>npx vercel --prod</code>.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pengaturan Profil */}
@@ -1214,11 +1562,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             });
             setSavedMsg('Profil pengguna berhasil diperbarui.');
           }}
-          className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 text-xs"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 text-xs"
         >
-          <h2 className="text-base font-bold text-[#071D49]">Pengaturan Profil Akun</h2>
+          <h2 className="text-base font-bold text-[#071D49] dark:text-white">
+            Pengaturan Profil Akun
+          </h2>
           <div>
-            <label htmlFor="prof-name" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="prof-name"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Nama Lengkap
             </label>
             <input
@@ -1226,11 +1579,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
           <div>
-            <label htmlFor="prof-pos" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="prof-pos"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Jabatan
             </label>
             <input
@@ -1238,11 +1594,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="text"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
           <div>
-            <label htmlFor="prof-phone" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="prof-phone"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Nomor Telepon
             </label>
             <input
@@ -1250,7 +1609,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
           <button
@@ -1272,13 +1631,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             });
             setSavedMsg('Konfigurasi sistem dan adapter integrasi berhasil disimpan.');
           }}
-          className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 text-xs"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 text-xs"
         >
-          <h2 className="text-base font-bold text-[#071D49]">
+          <h2 className="text-base font-bold text-[#071D49] dark:text-white">
             Pengaturan Sistem &amp; Adapter Integrasi
           </h2>
           <div>
-            <label htmlFor="sys-bim" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="sys-bim"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Endpoint Adapter API BIM (Tahap 2 Ready)
             </label>
             <input
@@ -1286,11 +1648,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="text"
               value={bimEndpoint}
               onChange={(e) => setBimEndpoint(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
             />
           </div>
           <div>
-            <label htmlFor="sys-rpc" className="block font-semibold text-slate-700 mb-1">
+            <label
+              htmlFor="sys-rpc"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
               Endpoint RPC Smart Contract Adapter
             </label>
             <input
@@ -1298,16 +1663,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="text"
               value={rpcEndpoint}
               onChange={(e) => setRpcEndpoint(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
             />
           </div>
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600">
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
             Catatan Keamanan: Aplikasi tidak menyimpan private key atau secret wallet di sisi
             frontend. Otorisasi transaksi produksi wajib melalui backend gateway terenkripsi.
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-[#071D49] text-white font-semibold rounded-lg"
+            className="px-4 py-2 bg-[#071D49] dark:bg-slate-800 text-white font-semibold rounded-lg"
           >
             Simpan Konfigurasi Sistem
           </button>
@@ -1330,29 +1695,30 @@ export const HelpView: React.FC = () => {
     '9. Apabila verifikasi disetujui (100%), Smart Contract secara otomatis membuka kunci termin pembayaran menjadi "Siap dibayarkan".',
     '10. Pengguna Jasa mengeksekusi pembayaran termin (simulasi fungsional DEMO pada tahap MVP).',
     '11. Riwayat transaksi beserta hash transaksi simulasi tercatat secara permanen dan dapat diekspor ke PDF/Excel.',
+    '12. Seluruh 18 tabel database dapat disinkronkan ke Google Sheets melalui modul Google Apps Script (code.gs & setup.gs) di menu Pengaturan.',
   ];
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
-        <h1 className="text-xl font-bold text-[#071D49]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5">
+        <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
           Pusat Bantuan &amp; Panduan Alur Kerja SmartBuild
         </h1>
-        <p className="text-xs text-slate-600 mt-0.5">
-          Dokumentasi alur kerja standar pengelolaan kontrak konstruksi, verifikasi BIM, dan
-          simulasi pembayaran berbasis Smart Contract.
+        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+          Dokumentasi alur kerja standar pengelolaan kontrak konstruksi, verifikasi BIM, integrasi
+          Google Apps Script, dan simulasi pembayaran berbasis Smart Contract.
         </p>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
-        <h2 className="text-base font-bold text-[#071D49]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3 text-xs">
+        <h2 className="text-base font-bold text-[#071D49] dark:text-white">
           Alur Kerja Utama Aplikasi (End-to-End Workflow)
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {workflowSteps.map((step) => (
             <div
               key={step}
-              className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-medium leading-relaxed"
+              className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-medium leading-relaxed"
             >
               {step}
             </div>

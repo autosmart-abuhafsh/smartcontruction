@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="logo_bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#071D49" />
+      <stop offset="100%" stop-color="#0B2968" />
+    </linearGradient>
+    <linearGradient id="logo_blue" x1="96" y1="80" x2="416" y2="432" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60A5FA" />
+      <stop offset="100%" stop-color="#1264F4" />
+    </linearGradient>
+    <linearGradient id="logo_green" x1="120" y1="300" x2="392" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#logo_bg)" />
+  <polygon points="256,56 432,156 432,356 256,456 80,356 80,156" stroke="#1E40AF" stroke-width="10" fill="rgba(18,100,244,0.1)" />
+  <polygon points="256,112 128,184 128,352 256,416 256,112" fill="url(#logo_blue)" />
+  <polygon points="256,112 384,184 384,352 256,416 256,112" fill="#1D4ED8" />
+  <polygon points="256,80 384,152 256,216 128,152" fill="#93C5FD" />
+  <line x1="172" y1="216" x2="224" y2="244" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" />
+  <line x1="172" y1="272" x2="224" y2="300" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" />
+  <line x1="340" y1="216" x2="288" y2="244" stroke="#BFDBFE" stroke-width="12" stroke-linecap="round" />
+  <line x1="340" y1="272" x2="288" y2="300" stroke="#BFDBFE" stroke-width="12" stroke-linecap="round" />
+  <polygon points="256,336 392,268 392,308 256,380 120,308 120,268" fill="url(#logo_green)" />
+  <circle cx="256" cy="56" r="14" fill="#60A5FA" />
+  <circle cx="432" cy="156" r="14" fill="#10B981" />
+  <circle cx="80" cy="156" r="14" fill="#10B981" />
+  <circle cx="256" cy="456" r="14" fill="#34D399" />
+</svg>

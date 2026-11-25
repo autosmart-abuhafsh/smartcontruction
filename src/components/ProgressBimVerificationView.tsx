@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import {
   Plus,
-  Layers,
   CheckCircle2,
   XCircle,
   RotateCcw,
-  FileCheck2,
   Box,
   Upload,
   Link2,
@@ -26,7 +24,6 @@ import {
 import {
   canPerformAction,
   formatDateID,
-  formatRupiah,
 } from '../utils/calculations';
 
 /* ============================================================================
@@ -58,7 +55,9 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
   );
 
   // New Report Form
-  const [milestoneId, setMilestoneId] = useState(projectMilestones[2]?.id || projectMilestones[0]?.id || 'ms-003');
+  const [milestoneId, setMilestoneId] = useState(
+    projectMilestones[2]?.id || projectMilestones[0]?.id || 'ms-003'
+  );
   const [submittedPercentage, setSubmittedPercentage] = useState<number>(100);
   const [reportDate, setReportDate] = useState('2026-11-25');
   const [workDescription, setWorkDescription] = useState('');
@@ -131,12 +130,12 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Manajemen Progres Pekerjaan Konstruksi
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Pantau target versus realisasi setiap tahapan, timeline pelaksanaan, dan ajukan laporan
             progres untuk diverifikasi.
           </p>
@@ -147,7 +146,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             aria-label="Pilih proyek untuk progres"
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="px-3 py-2 text-xs font-semibold border border-slate-300 rounded-lg bg-white"
+            className="px-3 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           >
             {db.projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -172,13 +171,13 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       {feedback && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between"
+          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
         >
           <span>{feedback}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="font-bold text-emerald-700"
+            className="font-bold text-emerald-700 dark:text-emerald-300"
             aria-label="Tutup pesan progres"
           >
             <X className="w-4 h-4" />
@@ -188,23 +187,26 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
       {/* Overall Project Progress Summary Card */}
       {selectedProject && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <div className="text-xs text-slate-500">
-                Proyek: <strong className="text-slate-800">{selectedProject.name}</strong> ·
-                Kontraktor: {selectedProject.contractorName} · Status: {selectedProject.status}
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Proyek:{' '}
+                <strong className="text-slate-800 dark:text-slate-100">
+                  {selectedProject.name}
+                </strong>{' '}
+                · Kontraktor: {selectedProject.contractorName} · Status: {selectedProject.status}
               </div>
-              <h2 className="text-base font-bold text-[#071D49] mt-0.5">
+              <h2 className="text-base font-bold text-[#071D49] dark:text-white mt-0.5">
                 Persentase Penyelesaian Keseluruhan (Terverifikasi)
               </h2>
             </div>
-            <div className="text-2xl font-bold font-mono text-[#1264F4] tabular-nums">
+            <div className="text-2xl font-bold font-mono text-[#1264F4] dark:text-blue-400 tabular-nums">
               {selectedProject.overallProgress}% / 100%
             </div>
           </div>
 
-          <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-[#1264F4] transition-all"
               style={{ width: `${selectedProject.overallProgress}%` }}
@@ -216,28 +218,32 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             {projectMilestones.map((ms) => (
               <div
                 key={ms.id}
-                className="p-3.5 rounded-lg border border-slate-200 bg-slate-50/70 flex flex-col justify-between space-y-2"
+                className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 flex flex-col justify-between space-y-2"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#071D49]">
+                    <span className="font-bold text-[#071D49] dark:text-white">
                       Tahap {ms.order}: {ms.name}
                     </span>
-                    <span className="font-mono font-semibold text-slate-600 tabular-nums">
+                    <span className="font-mono font-semibold text-slate-600 dark:text-slate-300 tabular-nums">
                       Bobot {ms.weightPercentage}%
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">{ms.description}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    {ms.description}
+                  </p>
                 </div>
 
-                <div className="space-y-1 pt-2 border-t border-slate-200/80 text-xs">
+                <div className="space-y-1 pt-2 border-t border-slate-200/80 dark:border-slate-700 text-xs">
                   <div className="flex justify-between tabular-nums">
-                    <span className="text-slate-500">Target vs Realisasi:</span>
-                    <span className="font-mono font-bold text-slate-800">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Target vs Realisasi:
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
                       {ms.targetProgress}% vs {ms.realizedProgress}%
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full ${
                         ms.realizedProgress >= 100 ? 'bg-[#10B981]' : 'bg-[#1264F4]'
@@ -245,9 +251,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                       style={{ width: `${ms.realizedProgress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[11px] text-slate-500 pt-1">
+                  <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                     <span>Batas: {formatDateID(ms.dueDate)}</span>
-                    <span className="font-semibold text-slate-700">{ms.status}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {ms.status}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -257,46 +265,50 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       )}
 
       {/* Riwayat Laporan Progres */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-bold text-[#071D49]">Riwayat Laporan Progres Lapangan</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-base font-bold text-[#071D49] dark:text-white">
+              Riwayat Laporan Progres Lapangan
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Catatan: Laporan progres yang diajukan kontraktor tidak langsung dianggap valid
               sebelum disetujui oleh Verifikator.
             </p>
           </div>
-          <span className="text-xs text-slate-500 tabular-nums">
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
             {projectReports.length} laporan tercatat
           </span>
         </div>
 
         <div className="space-y-3">
           {projectReports.length === 0 ? (
-            <p className="text-xs text-slate-500 py-4 text-center">
+            <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
               Belum ada laporan progres untuk proyek ini.
             </p>
           ) : (
             projectReports.map((rep) => (
               <div
                 key={rep.id}
-                className="p-4 rounded-lg border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
               >
                 <div className="space-y-1">
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     <span className="font-mono">{rep.id}</span> · Tanggal:{' '}
                     {formatDateID(rep.reportDate)} · Pelapor: {rep.submittedBy} ·{' '}
                     {rep.isDemo ? 'DEMO' : 'LIVE'}
                   </div>
-                  <div className="text-sm font-bold text-[#071D49]">
+                  <div className="text-sm font-bold text-[#071D49] dark:text-white">
                     Tahapan: {rep.milestoneName} — Pengajuan Realisasi {rep.submittedPercentage}%
                     (Target {rep.targetPercentage}%)
                   </div>
-                  <p className="text-xs text-slate-600">{rep.workDescription}</p>
-                  <div className="text-[11px] text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    {rep.workDescription}
+                  </p>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Catatan Kontraktor: {rep.contractorNotes}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-600">
+                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-600 dark:text-slate-300">
                     {rep.attachments.map((att) => (
                       <span key={att.id} className="flex items-center gap-1 font-mono">
                         <Camera className="w-3 h-3 text-[#1264F4]" />
@@ -306,14 +318,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   </div>
                 </div>
 
-                <div className="text-right shrink-0 space-y-1">
-                  <div className="text-xs text-slate-500">Status Verifikasi:</div>
+                <div className="md:text-right shrink-0 space-y-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Status Verifikasi:
+                  </div>
                   <div
                     className={`text-xs font-bold ${
                       rep.verificationStatus === 'Disetujui'
                         ? 'text-[#10B981]'
                         : rep.verificationStatus === 'Ditolak'
-                        ? 'text-red-600'
+                        ? 'text-red-600 dark:text-red-400'
                         : 'text-[#F59E0B]'
                     }`}
                   >
@@ -333,15 +347,15 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-xl w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <h2 className="text-base font-bold text-[#071D49]">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+              <h2 className="text-base font-bold text-[#071D49] dark:text-white">
                 Input Laporan Progres Pekerjaan
               </h2>
               <button
                 type="button"
                 onClick={() => setShowReportModal(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup modal laporan progres"
               >
                 <X className="w-5 h-5" />
@@ -349,21 +363,24 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSaveReport} className="space-y-4 text-xs">
               <div>
-                <label htmlFor="rep-ms" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="rep-ms"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Pilih Tahapan Pekerjaan ({selectedProject?.name})
                 </label>
                 <select
                   id="rep-ms"
                   value={milestoneId}
                   onChange={(e) => setMilestoneId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
                 >
                   {projectMilestones.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -376,7 +393,10 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="rep-pct" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="rep-pct"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Realisasi Progres Tahapan (%)
                   </label>
                   <input
@@ -386,11 +406,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     max={100}
                     value={submittedPercentage}
                     onChange={(e) => setSubmittedPercentage(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                   />
                 </div>
                 <div>
-                  <label htmlFor="rep-date" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="rep-date"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Tanggal Pelaporan
                   </label>
                   <input
@@ -398,13 +421,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     type="date"
                     value={reportDate}
                     onChange={(e) => setReportDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="rep-desc" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="rep-desc"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Deskripsi Pekerjaan yang Diselesaikan
                 </label>
                 <textarea
@@ -413,12 +439,15 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   value={workDescription}
                   onChange={(e) => setWorkDescription(e.target.value)}
                   placeholder="Jelaskan detail pelaksanaan fisik, hasil pengujian mutu, dan kesesuaian gambar kerja..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
               <div>
-                <label htmlFor="rep-notes" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="rep-notes"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Catatan Kontraktor
                 </label>
                 <input
@@ -427,13 +456,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   value={contractorNotes}
                   onChange={(e) => setContractorNotes(e.target.value)}
                   placeholder="Catatan tambahan untuk verifikator lapangan"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  <label htmlFor="rep-photo" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="rep-photo"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nama File Foto Dokumentasi
                   </label>
                   <input
@@ -441,11 +473,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     type="text"
                     value={photoName}
                     onChange={(e) => setPhotoName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label htmlFor="rep-doc" className="block font-semibold text-slate-700 mb-1">
+                  <label
+                    htmlFor="rep-doc"
+                    className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >
                     Nama Dokumen Pendukung
                   </label>
                   <input
@@ -453,16 +488,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     type="text"
                     value={docName}
                     onChange={(e) => setDocName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowReportModal(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold"
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
                 >
                   Batal
                 </button>
@@ -526,16 +561,18 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             Status Arsitektur BIM:{' '}
-            <strong className="text-[#1264F4]">{currentModel?.integrationStatus}</strong>
+            <strong className="text-[#1264F4] dark:text-blue-400">
+              {currentModel?.integrationStatus}
+            </strong>
           </div>
-          <h1 className="text-xl font-bold text-[#071D49] mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white mt-0.5">
             BIM Viewer 3D &amp; Integrasi Model Bangunan
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Visualisasi struktural 3D terhubung tahapan pekerjaan, metadata objek bangunan, dan
             penyimpanan referensi file IFC/Revit siap ekspansi API BIM.
           </p>
@@ -555,7 +592,7 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
               setModelVersionInput(found.version);
             }
           }}
-          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 rounded-lg bg-white"
+          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
         >
           {db.bim_models.map((m) => (
             <option key={m.id} value={m.id}>
@@ -566,8 +603,8 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
       </div>
 
       {/* Honest MVP Notice */}
-      <div className="bg-[#EAF2FF] border border-blue-200 rounded-xl p-4 flex items-start gap-3 text-xs text-[#071D49]">
-        <Info className="w-4 h-4 text-[#1264F4] shrink-0 mt-0.5" />
+      <div className="bg-[#EAF2FF] dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3 text-xs text-[#071D49] dark:text-blue-100">
+        <Info className="w-4 h-4 text-[#1264F4] dark:text-blue-400 shrink-0 mt-0.5" />
         <div>
           <span className="font-bold">Catatan Transparansi Integrasi BIM (MVP):</span> Komponen
           viewer 3D di bawah menampilkan proyeksi struktural interaktif yang dihubungkan dengan
@@ -579,7 +616,7 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Interactive 3D Isometric Viewport */}
-        <div className="lg:col-span-8 bg-[#071D49] text-white rounded-xl border border-slate-800 p-5 space-y-4">
+        <div className="lg:col-span-8 bg-[#071D49] text-white rounded-xl border border-slate-800 p-4 sm:p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/15">
             <div>
               <div className="text-xs text-slate-300 font-mono">
@@ -643,11 +680,11 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
           {/* Interactive SVG 3D Architectural Building Model */}
           <div
             data-testid="bim-3d-viewport"
-            className="relative bg-slate-950/70 rounded-xl border border-white/10 p-4 flex items-center justify-center min-h-[380px]"
+            className="relative bg-slate-950/70 rounded-xl border border-white/10 p-4 flex items-center justify-center min-h-[340px] sm:min-h-[380px]"
           >
             <svg
               viewBox="0 0 600 340"
-              className="w-full max-w-xl h-80 select-none transition-transform duration-200"
+              className="w-full max-w-xl h-72 sm:h-80 select-none transition-transform duration-200"
               style={{
                 transform:
                   cameraAngle === 'front'
@@ -667,7 +704,7 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                 <line x1="300" y1="220" x2="520" y2="270" />
               </g>
 
-              {/* TAHAP 1: PONDASI (Foundation Footings & Sloof) */}
+              {/* TAHAP 1: PONDASI */}
               {(highlightFilter === 'ALL' || highlightFilter === 'Pondasi') && (
                 <g
                   onClick={() => {
@@ -683,18 +720,24 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                     stroke="#10B981"
                     strokeWidth="2.5"
                   />
-                  {/* Footing pads */}
                   <rect x="145" y="252" width="22" height="14" fill="#10B981" />
                   <rect x="289" y="290" width="22" height="14" fill="#10B981" />
                   <rect x="435" y="252" width="22" height="14" fill="#10B981" />
                   <rect x="289" y="215" width="22" height="14" fill="#10B981" />
-                  <text x="300" y="295" textAnchor="middle" fill="#A7F3D0" fontSize="11" fontFamily="monospace">
+                  <text
+                    x="300"
+                    y="295"
+                    textAnchor="middle"
+                    fill="#A7F3D0"
+                    fontSize="11"
+                    fontFamily="monospace"
+                  >
                     [1] PONDASI TAPAK &amp; SLOOF (100% SELESAI)
                   </text>
                 </g>
               )}
 
-              {/* TAHAP 2: STRUKTUR (Columns & Beams Lantai 1-2) */}
+              {/* TAHAP 2: STRUKTUR */}
               {(highlightFilter === 'ALL' || highlightFilter === 'Struktur') && (
                 <g
                   onClick={() => {
@@ -703,12 +746,10 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                   }}
                   className="cursor-pointer transition-opacity hover:opacity-95"
                 >
-                  {/* Vertical Columns */}
                   <line x1="155" y1="255" x2="155" y2="145" stroke="#10B981" strokeWidth="6" />
                   <line x1="300" y1="292" x2="300" y2="175" stroke="#10B981" strokeWidth="6" />
                   <line x1="445" y1="255" x2="445" y2="145" stroke="#10B981" strokeWidth="6" />
                   <line x1="300" y1="220" x2="300" y2="115" stroke="#10B981" strokeWidth="5" />
-                  {/* Second floor structural slab */}
                   <polygon
                     points="155,195 300,232 445,195 300,158"
                     fill="#10B981"
@@ -716,22 +757,30 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                     stroke="#34D399"
                     strokeWidth="2"
                   />
-                  <text x="300" y="202" textAnchor="middle" fill="#D1FAE5" fontSize="11" fontFamily="monospace">
+                  <text
+                    x="300"
+                    y="202"
+                    textAnchor="middle"
+                    fill="#D1FAE5"
+                    fontSize="11"
+                    fontFamily="monospace"
+                  >
                     [2] STRUKTUR KOLOM &amp; BALOK (100% SELESAI)
                   </text>
                 </g>
               )}
 
-              {/* TAHAP 3: DINDING DAN ATAP (Envelope Walls & Steel Roof Truss) */}
+              {/* TAHAP 3: DINDING DAN ATAP */}
               {(highlightFilter === 'ALL' || highlightFilter === 'Dinding dan Atap') && (
                 <g
                   onClick={() => {
-                    const el = currentModel?.elements.find((e) => e.category === 'Dinding dan Atap');
+                    const el = currentModel?.elements.find(
+                      (e) => e.category === 'Dinding dan Atap'
+                    );
                     if (el) setSelectedElementId(el.id);
                   }}
                   className="cursor-pointer transition-opacity hover:opacity-95"
                 >
-                  {/* Roof Steel Trusses */}
                   <polygon
                     points="140,145 300,70 460,145 300,180"
                     fill="#1264F4"
@@ -739,15 +788,38 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                     stroke="#60A5FA"
                     strokeWidth="2.5"
                   />
-                  <line x1="220" y1="108" x2="300" y2="180" stroke="#93C5FD" strokeWidth="1.5" strokeDasharray="4 2" />
-                  <line x1="380" y1="108" x2="300" y2="180" stroke="#93C5FD" strokeWidth="1.5" strokeDasharray="4 2" />
-                  <text x="300" y="132" textAnchor="middle" fill="#DBEAFE" fontSize="11" fontFamily="monospace">
+                  <line
+                    x1="220"
+                    y1="108"
+                    x2="300"
+                    y2="180"
+                    stroke="#93C5FD"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 2"
+                  />
+                  <line
+                    x1="380"
+                    y1="108"
+                    x2="300"
+                    y2="180"
+                    stroke="#93C5FD"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 2"
+                  />
+                  <text
+                    x="300"
+                    y="132"
+                    textAnchor="middle"
+                    fill="#DBEAFE"
+                    fontSize="11"
+                    fontFamily="monospace"
+                  >
                     [3] DINDING &amp; ATAP BAJA (DALAM PROSES / VERIFIKASI)
                   </text>
                 </g>
               )}
 
-              {/* TAHAP 4: FINISHING (Interior Acoustic & Flooring) */}
+              {/* TAHAP 4: FINISHING */}
               {(highlightFilter === 'ALL' || highlightFilter === 'Finishing') && (
                 <g
                   onClick={() => {
@@ -763,7 +835,14 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                     strokeWidth="1.5"
                     strokeDasharray="5 3"
                   />
-                  <text x="300" y="250" textAnchor="middle" fill="#CBD5E1" fontSize="10" fontFamily="monospace">
+                  <text
+                    x="300"
+                    y="250"
+                    textAnchor="middle"
+                    fill="#CBD5E1"
+                    fontSize="10"
+                    fontFamily="monospace"
+                  >
                     [4] FINISHING &amp; MEP (BELUM DIMULAI - 0%)
                   </text>
                 </g>
@@ -771,17 +850,18 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
             </svg>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-3 text-xs text-slate-300">
-            <span>Klik komponen 3D di atas atau daftar elemen di kanan untuk memeriksa metadata BIM.</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-slate-300">
+            <span>
+              Klik komponen 3D di atas atau daftar elemen di kanan untuk memeriksa metadata BIM.
+            </span>
             <span className="font-mono">Sudut Kamera: {cameraAngle.toUpperCase()}</span>
           </div>
         </div>
 
         {/* Right Panel: Inspector Objek Bangunan & Referensi File BIM */}
         <div className="lg:col-span-4 space-y-5">
-          {/* Elemen Bangunan Terpilih */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-            <div className="flex items-center gap-2 text-[#071D49]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center gap-2 text-[#071D49] dark:text-white">
               <Box className="w-4 h-4 text-[#1264F4]" />
               <h2 className="text-sm font-bold">Informasi Objek Bangunan (BIM Inspector)</h2>
             </div>
@@ -794,18 +874,22 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                   onClick={() => setSelectedElementId(el.id)}
                   className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors ${
                     selectedElement?.id === el.id
-                      ? 'border-[#1264F4] bg-[#EAF2FF]/60'
-                      : 'border-slate-200 hover:bg-slate-50'
+                      ? 'border-[#1264F4] bg-[#EAF2FF]/60 dark:bg-blue-950/50'
+                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[#071D49]">{el.code}</span>
-                    <span className="font-mono font-semibold text-[#1264F4] tabular-nums">
+                    <span className="font-mono font-bold text-[#071D49] dark:text-blue-300">
+                      {el.code}
+                    </span>
+                    <span className="font-mono font-semibold text-[#1264F4] dark:text-blue-400 tabular-nums">
                       Progres: {el.completionRate}%
                     </span>
                   </div>
-                  <div className="font-semibold text-slate-800 mt-0.5">{el.name}</div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="font-semibold text-slate-800 dark:text-slate-100 mt-0.5">
+                    {el.name}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Tahap #{el.milestoneOrder} ({el.category}) · Status: {el.inspectionState}
                   </div>
                 </button>
@@ -813,21 +897,25 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
             </div>
 
             {selectedElement && (
-              <div className="pt-3 border-t border-slate-200 text-xs space-y-1.5">
-                <div className="font-bold text-[#071D49]">Detail Properti Objek Terpilih:</div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Elevasi / Level:</span>
-                  <span className="font-medium text-slate-800">{selectedElement.level}</span>
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
+                <div className="font-bold text-[#071D49] dark:text-white">
+                  Detail Properti Objek Terpilih:
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Spesifikasi Material:</span>
-                  <span className="font-medium text-slate-800 text-right max-w-[200px]">
+                  <span className="text-slate-500 dark:text-slate-400">Elevasi / Level:</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {selectedElement.level}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Spesifikasi Material:</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 text-right max-w-[200px]">
                     {selectedElement.material}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Estimasi Volume BIM:</span>
-                  <span className="font-mono font-bold text-slate-800 tabular-nums">
+                  <span className="text-slate-500 dark:text-slate-400">Estimasi Volume BIM:</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100 tabular-nums">
                     {selectedElement.volumeM3} m³
                   </span>
                 </div>
@@ -836,21 +924,24 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
           </div>
 
           {/* Penyimpanan Referensi File & URL Model BIM */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-            <div className="flex items-center gap-2 text-[#071D49]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center gap-2 text-[#071D49] dark:text-white">
               <Upload className="w-4 h-4 text-[#1264F4]" />
               <h2 className="text-sm font-bold">Penyimpanan Referensi &amp; URL Model BIM</h2>
             </div>
 
             {savedNotice && (
-              <div className="p-2.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+              <div className="p-2.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200">
                 {savedNotice}
               </div>
             )}
 
             <form onSubmit={handleSaveBimReference} className="space-y-3 text-xs">
               <div>
-                <label htmlFor="bim-file-name" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="bim-file-name"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Nama File Referensi BIM (.ifc / .rvt)
                 </label>
                 <input
@@ -858,11 +949,14 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                   type="text"
                   value={modelNameInput}
                   onChange={(e) => setModelNameInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono"
+                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                 />
               </div>
               <div>
-                <label htmlFor="bim-url" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="bim-url"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   URL Model BIM / Endpoint Repository
                 </label>
                 <input
@@ -870,11 +964,14 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                   type="text"
                   value={modelUrlInput}
                   onChange={(e) => setModelUrlInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono"
+                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                 />
               </div>
               <div>
-                <label htmlFor="bim-ver" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="bim-ver"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Versi Sinkronisasi Model
                 </label>
                 <input
@@ -882,12 +979,12 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
                   type="text"
                   value={modelVersionInput}
                   onChange={(e) => setModelVersionInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-2 px-3 bg-[#071D49] hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2 px-3 bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
                 <Link2 className="w-3.5 h-3.5" />
                 <span>Simpan Referensi File &amp; URL BIM</span>
@@ -932,7 +1029,9 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
 
   const openVerificationModal = (ver: VerificationRecord) => {
     setSelectedVer(ver);
-    setApprovedPctInput(ver.approvedPercentage > 0 ? ver.approvedPercentage : ver.submittedPercentage);
+    setApprovedPctInput(
+      ver.approvedPercentage > 0 ? ver.approvedPercentage : ver.submittedPercentage
+    );
     setNotesInput(ver.notes);
     setBimCheckedInput(ver.bimChecked || true);
   };
@@ -965,12 +1064,12 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#071D49]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Verifikasi &amp; Validasi Tahapan Pekerjaan
           </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Periksa laporan progres kontraktor, bukti foto/dokumen, kesesuaian data BIM, dan
             berikan persetujuan untuk membuka kunci termin pembayaran.
           </p>
@@ -980,7 +1079,7 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
           aria-label="Filter status verifikasi"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 rounded-lg bg-white"
+          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
         >
           <option value="ALL">Semua Status Verifikasi ({db.verifications.length})</option>
           <option value="Menunggu pemeriksaan">Menunggu pemeriksaan</option>
@@ -994,13 +1093,13 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
       {feedback && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between"
+          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
         >
           <span>{feedback}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="font-bold text-emerald-700"
+            className="font-bold text-emerald-700 dark:text-emerald-300"
             aria-label="Tutup pesan verifikasi"
           >
             <X className="w-4 h-4" />
@@ -1008,11 +1107,11 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                 <th className="py-3 px-4 font-semibold">ID Verifikasi &amp; Proyek</th>
                 <th className="py-3 px-4 font-semibold">Tahap Pekerjaan</th>
                 <th className="py-3 px-4 font-semibold text-right">Diajukan</th>
@@ -1022,41 +1121,45 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                 <th className="py-3 px-4 font-semibold text-right">Tindakan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredVerifications.map((ver) => (
-                <tr key={ver.id} className="hover:bg-slate-50/80">
+                <tr key={ver.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
                   <td className="py-3.5 px-4">
-                    <div className="font-mono text-[11px] text-slate-500">
+                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
                       {ver.id} · {formatDateID(ver.verificationDate)} ·{' '}
                       {ver.isDemo ? 'DEMO' : 'LIVE'}
                     </div>
-                    <div className="font-bold text-[#071D49] mt-0.5">{ver.projectName}</div>
+                    <div className="font-bold text-[#071D49] dark:text-white mt-0.5">
+                      {ver.projectName}
+                    </div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-semibold text-slate-800">{ver.milestoneName}</div>
-                    <div className="text-[11px] text-slate-500 truncate max-w-xs">
+                    <div className="font-semibold text-slate-800 dark:text-slate-100">
+                      {ver.milestoneName}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">
                       {ver.supportingEvidenceSummary}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-700 tabular-nums">
+                  <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
                     {ver.submittedPercentage}%
                   </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1264F4] tabular-nums">
+                  <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1264F4] dark:text-blue-400 tabular-nums">
                     {ver.approvedPercentage}%
                   </td>
-                  <td className="py-3.5 px-4 text-slate-700">
+                  <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
                     <div>{ver.verifierName}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
                       Validasi BIM: {ver.bimChecked ? 'Terperiksa' : 'Belum diperiksa'}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
                     <span
-                      className={`font-bold ${
+                      className={`font-bold whitespace-nowrap ${
                         ver.status === 'Disetujui'
                           ? 'text-[#10B981]'
                           : ver.status === 'Ditolak'
-                          ? 'text-red-600'
+                          ? 'text-red-600 dark:text-red-400'
                           : 'text-[#F59E0B]'
                       }`}
                     >
@@ -1067,7 +1170,7 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                     <button
                       type="button"
                       onClick={() => openVerificationModal(ver)}
-                      className="px-3 py-1.5 rounded-lg bg-[#071D49] hover:bg-slate-800 text-white font-semibold inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold inline-flex items-center gap-1.5 whitespace-nowrap"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>{canVerify ? 'Periksa & Putuskan' : 'Lihat Detail'}</span>
@@ -1087,36 +1190,38 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-xl border border-slate-200 max-w-2xl w-full p-6 shadow-xl space-y-4">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className="text-xs font-mono text-slate-500">
+                <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                   ID Verifikasi: {selectedVer.id} · Laporan: {selectedVer.reportId}
                 </div>
-                <h2 className="text-base font-bold text-[#071D49] mt-0.5">
+                <h2 className="text-base font-bold text-[#071D49] dark:text-white mt-0.5">
                   Pemeriksaan Tahapan: {selectedVer.milestoneName} ({selectedVer.projectName})
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedVer(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 aria-label="Tutup modal verifikasi"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs">
               <div>
-                <div className="text-slate-500">Persentase Diajukan Kontraktor</div>
-                <div className="text-base font-mono font-bold text-[#071D49] tabular-nums mt-0.5">
+                <div className="text-slate-500 dark:text-slate-400">
+                  Persentase Diajukan Kontraktor
+                </div>
+                <div className="text-base font-mono font-bold text-[#071D49] dark:text-white tabular-nums mt-0.5">
                   {selectedVer.submittedPercentage}%
                 </div>
               </div>
               <div>
-                <div className="text-slate-500">Ringkasan Bukti Pendukung</div>
-                <div className="font-semibold text-slate-800 mt-0.5">
+                <div className="text-slate-500 dark:text-slate-400">Ringkasan Bukti Pendukung</div>
+                <div className="font-semibold text-slate-800 dark:text-slate-100 mt-0.5">
                   {selectedVer.supportingEvidenceSummary}
                 </div>
               </div>
@@ -1126,7 +1231,7 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
               <div>
                 <label
                   htmlFor="ver-approved-pct"
-                  className="block font-semibold text-slate-700 mb-1"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
                 >
                   Persentase yang Disetujui Verifikator (%)
                 </label>
@@ -1138,7 +1243,7 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                   disabled={!canVerify}
                   value={approvedPctInput}
                   onChange={(e) => setApprovedPctInput(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
                 />
               </div>
 
@@ -1151,13 +1256,20 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                   onChange={(e) => setBimCheckedInput(e.target.checked)}
                   className="rounded border-slate-300"
                 />
-                <label htmlFor="ver-bim-check" className="font-semibold text-slate-700">
-                  Data objek pada BIM Viewer telah diperiksa dan sesuai dengan kondisi fisik lapangan
+                <label
+                  htmlFor="ver-bim-check"
+                  className="font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  Data objek pada BIM Viewer telah diperiksa dan sesuai dengan kondisi fisik
+                  lapangan
                 </label>
               </div>
 
               <div>
-                <label htmlFor="ver-notes" className="block font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="ver-notes"
+                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Catatan Pemeriksaan / Catatan Revisi
                 </label>
                 <textarea
@@ -1167,13 +1279,13 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
                   placeholder="Tuliskan hasil inspeksi teknis, kualitas pekerjaan, atau detail revisi jika ditolak..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
                 />
               </div>
             </div>
 
             {canVerify ? (
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-4 border-t border-slate-200">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => handleDecision('Ditolak')}
@@ -1200,11 +1312,11 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="flex justify-end pt-3 border-t border-slate-200">
+              <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setSelectedVer(null)}
-                  className="px-4 py-2 rounded-lg bg-[#071D49] text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 text-white text-xs font-semibold"
                 >
                   Tutup
                 </button>

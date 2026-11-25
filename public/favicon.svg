@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="sb_bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#071D49" />
+      <stop offset="100%" stop-color="#0F2D6B" />
+    </linearGradient>
+    <linearGradient id="sb_accent" x1="24" y1="20" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1264F4" />
+    </linearGradient>
+    <linearGradient id="sb_emerald" x1="24" y1="70" x2="104" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#sb_bg)" />
+  <!-- Outer Smart Contract Hexagon Frame -->
+  <polygon points="64,14 108,39 108,89 64,114 20,89 20,39" stroke="#1E40AF" stroke-width="3" fill="rgba(18,100,244,0.08)" />
+  <!-- Isometric BIM Building Tower Left Wing -->
+  <polygon points="64,28 32,46 32,88 64,104 64,28" fill="url(#sb_accent)" />
+  <!-- Isometric BIM Building Tower Right Wing -->
+  <polygon points="64,28 96,46 96,88 64,104 64,28" fill="#1D4ED8" />
+  <!-- Isometric Roof Top -->
+  <polygon points="64,20 96,38 64,54 32,38" fill="#60A5FA" />
+  <!-- Structural BIM Grid Lines -->
+  <line x1="44" y1="54" x2="56" y2="61" stroke="#E0F2FE" stroke-width="3" stroke-linecap="round" />
+  <line x1="44" y1="68" x2="56" y2="75" stroke="#E0F2FE" stroke-width="3" stroke-linecap="round" />
+  <line x1="84" y1="54" x2="72" y2="61" stroke="#93C5FD" stroke-width="3" stroke-linecap="round" />
+  <line x1="84" y1="68" x2="72" y2="75" stroke="#93C5FD" stroke-width="3" stroke-linecap="round" />
+  <!-- Verified Foundation Base Badge -->
+  <polygon points="64,84 98,67 98,77 64,95 30,77 30,67" fill="url(#sb_emerald)" />
+</svg>

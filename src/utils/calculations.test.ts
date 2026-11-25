@@ -12,6 +12,16 @@ import {
   validateMilestonesTotalPercentage,
 } from './calculations';
 import { ContractMilestone, PaymentSchedule, Project } from '../types/smartbuild';
+import { isValidAppsScriptUrl } from '../services/appsScriptService';
+
+test('isValidAppsScriptUrl validates Google Apps Script Web App deployment URLs', () => {
+  assert.equal(
+    isValidAppsScriptUrl('https://script.google.com/macros/s/AKfycbz1234567890abcdef/exec'),
+    true
+  );
+  assert.equal(isValidAppsScriptUrl('https://example.com/api'), false);
+  assert.equal(isValidAppsScriptUrl(''), false);
+});
 
 test('formatRupiah formats Indonesian currency accurately', () => {
   assert.equal(formatRupiah(100000000), 'Rp100.000.000');
