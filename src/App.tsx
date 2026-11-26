@@ -70,7 +70,7 @@ import {
   UsersManagementView,
 } from './components/PaymentsTransactionsReportsView';
 
-const STORAGE_KEY = 'smartbuild_enterprise_db_v2_mahanggi';
+const STORAGE_KEY = 'smartbuild_enterprise_db_v3_mahanggi';
 const THEME_STORAGE_KEY = 'smartbuild_theme_dark_v1';
 const GAS_CONFIG_KEY = 'smartbuild_gas_config_v1';
 
@@ -946,7 +946,7 @@ export default function App() {
             onClick={() =>
               triggerLoadingAnimation(
                 'Menyinkronkan Mesin BIM 3D & Smart Contract...',
-                'Memeriksa integritas 18 tabel relational & Apps Script',
+                'Memeriksa sinkronisasi data kontrak, progres lapangan & BIM 3D',
                 950
               )
             }
@@ -1245,6 +1245,43 @@ export default function App() {
               db={db}
               currentUser={currentUser}
               onSubmitProgressReport={handleSubmitProgressReport}
+              onProcessVerification={handleProcessVerification}
+              onResetStage3Simulation={() => {
+                setDb((prev) => {
+                  const updatedMilestones = prev.contract_milestones.map((m) =>
+                    m.id === 'ms-103'
+                      ? { ...m, realizedProgress: 20, status: 'Dalam Proses' as const }
+                      : m
+                  );
+                  const prj1Milestones = updatedMilestones.filter((m) => m.projectId === 'prj-001');
+                  const newOverall = calculateWeightedProjectProgress(prj1Milestones);
+                  return {
+                    ...prev,
+                    contract_milestones: updatedMilestones,
+                    projects: prev.projects.map((p) =>
+                      p.id === 'prj-001' ? { ...p, overallProgress: newOverall } : p
+                    ),
+                    payment_schedules: prev.payment_schedules.map((s) =>
+                      s.milestoneId === 'ms-103'
+                        ? {
+                            ...s,
+                            status: 'Menunggu verifikasi' as const,
+                            paidAt: undefined,
+                            txHash: undefined,
+                            proofRef: undefined,
+                          }
+                        : s
+                    ),
+                    verifications: INITIAL_DATABASE.verifications,
+                    progress_reports: INITIAL_DATABASE.progress_reports,
+                  };
+                });
+                triggerLoadingAnimation(
+                  'Mengulang Simulasi Tahap 3...',
+                  'Mengembalikan Tahap 3 (Dinding & Atap) ke kondisi awal 20% Dalam Proses',
+                  500
+                );
+              }}
             />
           )}
 

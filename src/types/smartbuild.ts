@@ -60,6 +60,8 @@ export interface Organization {
 
 export interface User {
   id: string;
+  loginId?: string;
+  password?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -165,6 +167,10 @@ export interface ProgressAttachment {
   fileType: 'Foto Dokumentasi' | 'Dokumen Teknis' | 'Data Lapangan';
   fileSize: string;
   uploadedAt: string;
+  fileDataUrl?: string;
+  mimeType?: string;
+  description?: string;
+  uploadedBy?: string;
 }
 
 export interface ProgressReport {

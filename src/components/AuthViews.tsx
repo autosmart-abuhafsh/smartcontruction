@@ -34,8 +34,8 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
   onRegister,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('budi.santoso@owner.id');
-  const [password, setPassword] = useState('smartbuild2026');
+  const [email, setEmail] = useState('citra.maharani');
+  const [password, setPassword] = useState('citra2026');
   const [error, setError] = useState('');
   const [activeBimStage, setActiveBimStage] = useState<number>(0);
 
@@ -58,12 +58,22 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
     e.preventDefault();
     setError('');
     if (!email.trim() || !password.trim()) {
-      setError('Mohon masukkan alamat email dan kata sandi.');
+      setError('Mohon masukkan ID Akun / Email dan Kata Sandi.');
       return;
     }
-    const found = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+    const q = email.trim().toLowerCase();
+    const found = users.find(
+      (u) =>
+        u.email.toLowerCase() === q ||
+        (u.loginId && u.loginId.toLowerCase() === q) ||
+        u.id.toLowerCase() === q
+    );
     if (!found) {
-      setError('Akun tidak ditemukan. Silakan pilih akun demo di bawah atau daftar akun baru.');
+      setError('ID Akun atau Email tidak ditemukan. Silakan pilih akun di bawah atau hubungi Super Admin.');
+      return;
+    }
+    if (found.password && found.password !== password.trim()) {
+      setError('Kata sandi tidak sesuai dengan yang diatur pada Manajemen Akun.');
       return;
     }
     onLogin(found);
@@ -301,11 +311,11 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
               </div>
               <div className="flex items-start gap-2">
                 <ClipboardCheck className="w-4 h-4 text-[#60A5FA] shrink-0 mt-0.5" />
-                <span>Integrasi Cloud Google Apps Script (`code.gs` &amp; `setup.gs`) &amp; Vercel</span>
+                <span>Pengiriman Bukti Digital (Digital Evidence) &amp; Verifikasi Lapangan</span>
               </div>
               <div className="flex items-start gap-2">
                 <HardHat className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
-                <span>Simulasi Otomatisasi Termin Pembayaran Smart Contract (DEMO)</span>
+                <span>Pencairan Otomatis Termin Smart Contract Setelah Pekerjaan Selesai</span>
               </div>
             </div>
           </div>
@@ -366,8 +376,7 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
                 Masuk ke Portal SmartBuild
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-                Gunakan kredensial akun Anda atau pilih kartu peran (RBAC) di bawah untuk masuk
-                dengan animasi ruang kerja.
+                Masukkan ID Akun / Email dan Password yang dikelola oleh Super Admin, atau pilih kartu peran di bawah.
               </p>
 
               <form onSubmit={handleFormLogin} className="space-y-4 mb-6">
@@ -376,14 +385,14 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
                     htmlFor="login-email"
                     className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
                   >
-                    Alamat Email
+                    ID Akun / Alamat Email
                   </label>
                   <input
                     id="login-email"
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@perusahaan.co.id"
+                    placeholder="Contoh: citra.maharani atau muhajirin.kasim"
                     className="w-full px-3.5 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
                   />
                 </div>
@@ -392,7 +401,7 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
                     htmlFor="login-password"
                     className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
                   >
-                    Kata Sandi
+                    Password Akun
                   </label>
                   <input
                     id="login-password"
@@ -436,8 +445,8 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
                       <div className="text-xs font-medium text-slate-800 dark:text-slate-100 mt-1 truncate">
                         {u.name}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        {u.email}
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-mono">
+                        ID: {u.loginId || u.id} · {u.email}
                       </div>
                     </motion.button>
                   ))}

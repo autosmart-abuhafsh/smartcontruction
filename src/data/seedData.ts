@@ -42,6 +42,8 @@ export const INITIAL_DATABASE: SmartBuildDatabase = {
   users: [
     {
       id: 'usr-admin',
+      loginId: 'admin.rendra',
+      password: 'admin2026',
       name: 'Rendra Wijaya',
       email: 'admin@smartbuild.id',
       role: 'super_admin',
@@ -54,6 +56,8 @@ export const INITIAL_DATABASE: SmartBuildDatabase = {
     },
     {
       id: 'usr-client',
+      loginId: 'citra.maharani',
+      password: 'citra2026',
       name: 'Citra Ayu Deswina Maharani',
       email: 'citra.maharani@owner.id',
       role: 'client',
@@ -66,6 +70,8 @@ export const INITIAL_DATABASE: SmartBuildDatabase = {
     },
     {
       id: 'usr-contractor',
+      loginId: 'muhajirin.kasim',
+      password: 'muhajirin2026',
       name: 'Muhajirin Kasim',
       email: 'muhajirin.kasim@kontraktor.id',
       role: 'contractor',
@@ -81,6 +87,8 @@ export const INITIAL_DATABASE: SmartBuildDatabase = {
     },
     {
       id: 'usr-verifier',
+      loginId: 'dian.verifikator',
+      password: 'dian2026',
       name: 'Ir. Dian Permatasari, MT',
       email: 'dian.verifikator@presisi.co.id',
       role: 'verifikator',

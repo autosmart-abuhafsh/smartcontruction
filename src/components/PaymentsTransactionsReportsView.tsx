@@ -1087,6 +1087,8 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   onToggleUserStatus,
 }) => {
   const [name, setName] = useState('');
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('smartbuild2026');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('super_admin');
   const [orgName, setOrgName] = useState('PT Karya Konstruksi');
@@ -1097,14 +1099,29 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showEditPassword, setShowEditPassword] = useState<boolean>(true);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const toggleRevealPassword = (userId: string) => {
+    setRevealedPasswords((prev) => ({ ...prev, [userId]: !prev[userId] }));
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
+    const generatedLoginId =
+      loginId.trim() ||
+      name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '.')
+        .replace(/^\.|\.$/g, '');
     onAddUser({
       name: name.trim(),
+      loginId: generatedLoginId,
+      password: password.trim() || 'smartbuild2026',
       email: email.trim(),
       role,
       organizationId: `org-${Date.now()}`,
@@ -1113,8 +1130,12 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       phone: phone.trim() || '0812-0000-0000',
       status: 'Aktif',
     });
-    setFeedbackMsg(`Akun "${name.trim()}" (${getRoleLabel(role)}) berhasil ditambahkan.`);
+    setFeedbackMsg(
+      `Akun "${name.trim()}" (ID: ${generatedLoginId}) berhasil ditambahkan oleh Super Admin.`
+    );
     setName('');
+    setLoginId('');
+    setPassword('smartbuild2026');
     setEmail('');
     setShowAdd(false);
   };
@@ -1125,6 +1146,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     const matchesQuery =
       !q ||
       u.name.toLowerCase().includes(q) ||
+      (u.loginId && u.loginId.toLowerCase().includes(q)) ||
       u.email.toLowerCase().includes(q) ||
       u.organizationName.toLowerCase().includes(q) ||
       getRoleLabel(u.role).toLowerCase().includes(q);
@@ -1135,18 +1157,22 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-[#1264F4] dark:text-blue-400 text-[11px] font-bold mb-1">
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Otoritas Super Admin: Kelola ID Login &amp; Password Semua Akun</span>
+          </div>
           <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
-            Manajemen Admin, Pengguna &amp; Peran (RBAC)
+            Manajemen Admin, Pengguna, ID Login &amp; Password (RBAC)
           </h1>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Atur, tambah, edit, hapus, atau masuk langsung sebagai pengguna/admin tertentu pada
-            platform SmartBuild.
+            Super Admin dapat melihat, mengatur, mengubah ID Login &amp; Password akun lain,
+            mengedit rekening bank, menghapus akun, atau masuk langsung sebagai pengguna tertentu.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowAdd(!showAdd)}
-          className="px-4 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+          className="px-4 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Admin / Pengguna</span>
@@ -1174,7 +1200,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama admin/pengguna, email, perusahaan, atau peran..."
+            placeholder="Cari nama pengguna, ID akun, email, perusahaan, atau peran..."
             className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
           />
         </div>
@@ -1186,7 +1212,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
             id="usr-role-filter"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+            className="w-full sm:w-auto px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
           >
             <option value="ALL">Semua Peran ({db.users.length})</option>
             <option value="super_admin">Super Admin</option>
@@ -1204,7 +1230,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         >
           <div className="sm:col-span-3 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <span className="font-bold text-sm text-[#071D49] dark:text-white">
-              Tambah Akun Admin / Pengguna Baru
+              Tambah Akun Admin / Pengguna Baru (Beserta ID Login &amp; Password)
             </span>
             <button
               type="button"
@@ -1228,6 +1254,39 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Ir. Ahmad Fauzi"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="usr-new-loginid"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
+              ID Akun / Username Login
+            </label>
+            <input
+              id="usr-new-loginid"
+              type="text"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              placeholder="Contoh: ahmad.fauzi"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="usr-new-password"
+              className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Password Akun
+            </label>
+            <input
+              id="usr-new-password"
+              type="text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password login pengguna"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
               required
             />
           </div>
@@ -1282,7 +1341,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
             />
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <label
               htmlFor="usr-new-pos"
               className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
@@ -1318,20 +1377,23 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         </form>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
-              <th className="py-3 px-4">Nama &amp; Email</th>
+              <th className="py-3 px-4">Nama &amp; Kontak</th>
+              <th className="py-3 px-4">ID Akun &amp; Password Login</th>
               <th className="py-3 px-4">Peran (RBAC)</th>
-              <th className="py-3 px-4">Organisasi &amp; Jabatan</th>
+              <th className="py-3 px-4">Organisasi &amp; Rekening</th>
               <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4 text-right">Aksi (Masuk / Edit / Hapus)</th>
+              <th className="py-3 px-4 text-right">Aksi (Masuk / Kelola ID &amp; Password / Hapus)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredUsers.map((u) => {
               const isCurrent = u.id === currentUser.id;
+              const isPassRevealed = !!revealedPasswords[u.id];
               return (
                 <tr
                   key={u.id}
@@ -1352,6 +1414,36 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400">
                       {u.email} · {u.phone}
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1 max-w-[230px]">
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-slate-500 dark:text-slate-400">ID Login:</span>
+                        <span className="font-mono font-bold text-[#071D49] dark:text-blue-300">
+                          {u.loginId || u.id}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-slate-500 dark:text-slate-400">Password:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                            {isPassRevealed ? u.password || 'smartbuild2026' : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleRevealPassword(u.id)}
+                            className="text-slate-400 hover:text-[#1264F4] dark:hover:text-blue-400"
+                            title={isPassRevealed ? 'Sembunyikan Password' : 'Lihat Password'}
+                          >
+                            {isPassRevealed ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="py-3.5 px-4 font-semibold text-[#1264F4] dark:text-blue-400">
@@ -1418,12 +1510,19 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => setEditingUser({ ...u })}
+                        onClick={() => {
+                          setEditingUser({
+                            ...u,
+                            loginId: u.loginId || u.id,
+                            password: u.password || 'smartbuild2026',
+                          });
+                          setShowEditPassword(true);
+                        }}
                         className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1"
-                        title="Edit data pengguna / admin"
+                        title="Kelola ID Login, Password, dan data pengguna"
                       >
-                        <Edit2 className="w-3.5 h-3.5 text-[#1264F4]" />
-                        <span>Edit</span>
+                        <KeyRound className="w-3.5 h-3.5 text-[#1264F4]" />
+                        <span>Kelola ID &amp; Password</span>
                       </button>
 
                       <button
@@ -1445,17 +1544,149 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         </table>
       </div>
 
-      {/* Modal Edit Admin / Pengguna & Masuk Sebagai Pengguna */}
+      {/* Mobile Cards View (Responsive for HP) */}
+      <div className="md:hidden space-y-3">
+        {filteredUsers.map((u) => {
+          const isCurrent = u.id === currentUser.id;
+          const isPassRevealed = !!revealedPasswords[u.id];
+          return (
+            <div
+              key={u.id}
+              className={`p-4 rounded-xl border text-xs space-y-3 ${
+                isCurrent
+                  ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-sm text-[#071D49] dark:text-white">
+                      {u.name}
+                    </span>
+                    {isCurrent && (
+                      <span className="px-2 py-0.5 rounded bg-[#1264F4] text-white text-[10px] font-bold">
+                        Aktif
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[#1264F4] dark:text-blue-400 font-semibold mt-0.5">
+                    {getRoleLabel(u.role)}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {u.organizationName} · {u.position}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggleUserStatus(u.id)}
+                  className={`font-bold text-[11px] px-2 py-0.5 rounded ${
+                    u.status === 'Aktif'
+                      ? 'bg-emerald-500/15 text-[#10B981]'
+                      : 'bg-amber-500/15 text-amber-500'
+                  }`}
+                >
+                  {u.status}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">ID Login Akun:</span>
+                  <span className="font-mono font-bold text-[#071D49] dark:text-blue-300">
+                    {u.loginId || u.id}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Password Login:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                      {isPassRevealed ? u.password || 'smartbuild2026' : '••••••••'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleRevealPassword(u.id)}
+                      className="text-slate-400 hover:text-[#1264F4]"
+                    >
+                      {isPassRevealed ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400">Email:</span>
+                  <span className="text-slate-700 dark:text-slate-300">{u.email}</span>
+                </div>
+              </div>
+
+              {u.bankAccountNumber && (
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                  <Landmark className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    {u.bankName || 'Bank Mandiri'} · {u.bankAccountNumber} a.n.{' '}
+                    {u.bankAccountHolder || u.name.toUpperCase()}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onLoginAsUser(u.id);
+                    setFeedbackMsg(`Berhasil masuk sebagai "${u.name}".`);
+                  }}
+                  className={`py-2 px-2 rounded-lg font-semibold flex items-center justify-center gap-1 ${
+                    isCurrent ? 'bg-emerald-600 text-white' : 'bg-[#1264F4] text-white'
+                  }`}
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isCurrent ? 'Aktif' : 'Masuk'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingUser({
+                      ...u,
+                      loginId: u.loginId || u.id,
+                      password: u.password || 'smartbuild2026',
+                    });
+                    setShowEditPassword(true);
+                  }}
+                  className="py-2 px-2 rounded-lg border border-slate-300 dark:border-slate-700 font-semibold flex items-center justify-center gap-1 text-slate-700 dark:text-slate-200"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-[#1264F4]" />
+                  <span>ID &amp; Pass</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={db.users.length <= 1}
+                  onClick={() => setConfirmDeleteUser(u)}
+                  className="py-2 px-2 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 font-semibold flex items-center justify-center gap-1 disabled:opacity-40"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus</span>
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal Edit Admin / Pengguna, ID Login, Password & Masuk Sebagai Pengguna */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 text-xs shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 text-xs shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <h2 className="text-base font-bold text-[#071D49] dark:text-white">
-                  Edit Akun Admin / Pengguna
+                  Kelola ID Login, Password &amp; Profil Akun
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Ubah nama, peran RBAC, perusahaan, atau langsung masuk sebagai pengguna ini.
+                  Super Admin dapat mengubah ID Login, Password, Peran RBAC, dan Rekening akun ini.
                 </p>
               </div>
               <button
@@ -1465,6 +1696,66 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Highlighted Super Admin ID & Password Credential Section */}
+            <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 space-y-3">
+              <div className="flex items-center gap-1.5 font-bold text-[#071D49] dark:text-blue-300">
+                <KeyRound className="w-4 h-4 text-[#1264F4]" />
+                <span>Pengaturan Kredensial Login (ID Akun &amp; Password)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="edit-user-loginid"
+                    className="block font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  >
+                    ID Login / Username Akun
+                  </label>
+                  <input
+                    id="edit-user-loginid"
+                    type="text"
+                    value={editingUser.loginId || ''}
+                    onChange={(e) =>
+                      setEditingUser({ ...editingUser, loginId: e.target.value })
+                    }
+                    placeholder="Contoh: citra.maharani"
+                    className="w-full px-3 py-2 border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="edit-user-password"
+                    className="block font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  >
+                    Password Login Akun
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="edit-user-password"
+                      type={showEditPassword ? 'text' : 'password'}
+                      value={editingUser.password || ''}
+                      onChange={(e) =>
+                        setEditingUser({ ...editingUser, password: e.target.value })
+                      }
+                      placeholder="Masukkan password baru..."
+                      className="w-full pl-3 pr-9 py-2 border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg font-mono font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPassword((v) => !v)}
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      title="Tampilkan / Sembunyikan Password"
+                    >
+                      {showEditPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -1620,12 +1911,14 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                 onClick={() => {
                   if (!editingUser.name.trim()) return;
                   onUpdateUser(editingUser, false);
-                  setFeedbackMsg(`Data akun "${editingUser.name}" berhasil diperbarui.`);
+                  setFeedbackMsg(
+                    `ID Login ("${editingUser.loginId}"), Password, dan profil "${editingUser.name}" berhasil diperbarui.`
+                  );
                   setEditingUser(null);
                 }}
                 className="px-3.5 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold"
               >
-                Simpan Perubahan
+                Simpan ID &amp; Password
               </button>
               <button
                 type="button"
@@ -1771,8 +2064,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-            Menu <strong>Pengaturan</strong> (Konfigurasi Database Google Apps Script, Integrasi
-            Vercel, dan Sistem Inti) dikunci menggunakan password khusus pemilik website aplikasi.
+            Menu <strong>Pengaturan Sistem Inti</strong> dikunci menggunakan password khusus pemilik
+            website aplikasi untuk menjaga keamanan konfigurasi internal.
           </p>
 
           {ownerPasswordError && (
@@ -2263,18 +2556,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
 export const HelpView: React.FC = () => {
   const workflowSteps = [
-    '1. Pengguna Jasa (Owner) dan Penyedia Jasa (Kontraktor) membuat akun pada portal SmartBuild.',
-    '2. Pengguna Jasa membuat proyek konstruksi baru beserta informasi lokasi, nilai kontrak, dan dokumen DED.',
-    '3. Kedua belah pihak menyusun dan menyetujui Kontrak Digital yang memuat tahapan pekerjaan (total 100%).',
-    '4. Sistem secara otomatis menyimpan jadwal tahapan dan termin pembayaran pada modul Smart Contract.',
+    '1. Pengguna Jasa (Citra Ayu Deswina Maharani) dan Penyedia Jasa (Muhajirin Kasim) masuk menggunakan ID Akun & Password masing-masing.',
+    '2. Pengguna Jasa mendaftarkan proyek Pembangunan Rumah di Gang Mahanggi Tenggarong beserta nilai kontrak dan dokumen teknis.',
+    '3. Kedua belah pihak menyepakati Kontrak Digital yang membagi pekerjaan menjadi 4 tahapan utama (Pondasi 25%, Struktur 30%, Dinding & Atap 25%, Finishing 20%).',
+    '4. Sistem menghubungkan jadwal tahapan pekerjaan dengan rekening pencairan otomatis Penyedia Jasa (Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM).',
     '5. Kontraktor melaksanakan pekerjaan konstruksi di lapangan sesuai spesifikasi.',
-    '6. Kontraktor mengirim Laporan Progres tahapan beserta foto dokumentasi dan referensi objek BIM.',
-    '7. Verifikator / Pengawas memeriksa bukti dokumentasi dan memvalidasi objek pada BIM Viewer 3D.',
-    '8. Verifikator memberikan persetujuan, permintaan revisi, atau penolakan terhadap progres yang diajukan.',
-    '9. Apabila verifikasi disetujui (100%), Smart Contract secara otomatis membuka kunci termin pembayaran menjadi "Siap dibayarkan".',
-    '10. Pengguna Jasa mengeksekusi pembayaran termin (simulasi fungsional DEMO pada tahap MVP).',
-    '11. Riwayat transaksi beserta hash transaksi simulasi tercatat secara permanen dan dapat diekspor ke PDF/Excel.',
-    '12. Seluruh 18 tabel database dapat disinkronkan ke Google Sheets melalui modul Google Apps Script (code.gs & setup.gs) di menu Pengaturan.',
+    '6. Kontraktor mengunggah Bukti Digital (Digital Evidence berupa file foto lapangan & dokumen PDF/berita acara) pada menu Progress Proyek.',
+    '7. Verifikator / Pengawas memeriksa file Bukti Digital yang diunggah kontraktor dan memvalidasi kesesuaian bangunan pada BIM Viewer 3D.',
+    '8. Verifikator memberikan persetujuan (100%), permintaan revisi, atau penolakan terhadap progres tahapan yang diajukan.',
+    '9. Begitu tahapan pekerjaan disetujui 100% oleh Verifikator, Smart Contract otomatis mencairkan dana termin ke rekening Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM.',
+    '10. Bukti pencairan dan riwayat transaksi tercatat otomatis dan dapat diekspor ke PDF maupun Excel (CSV).',
+    '11. Super Admin dapat mengelola ID Login, Password, dan hak akses seluruh pengguna pada menu Pengguna.',
   ];
 
   return (
@@ -2284,8 +2576,8 @@ export const HelpView: React.FC = () => {
           Pusat Bantuan &amp; Panduan Alur Kerja SmartBuild
         </h1>
         <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-          Dokumentasi alur kerja standar pengelolaan kontrak konstruksi, verifikasi BIM, integrasi
-          Google Apps Script, dan simulasi pembayaran berbasis Smart Contract.
+          Dokumentasi alur kerja standar pengelolaan kontrak konstruksi, pengiriman bukti digital
+          kontraktor, verifikasi BIM, dan pencairan pembayaran otomatis berbasis Smart Contract.
         </p>
       </div>
 
@@ -2307,3 +2599,4 @@ export const HelpView: React.FC = () => {
     </div>
   );
 };
+
