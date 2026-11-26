@@ -12,6 +12,8 @@ import {
   Bell,
   Activity,
   Database,
+  Landmark,
+  Users,
 } from 'lucide-react';
 import { MenuId, SmartBuildDatabase, User } from '../types/smartbuild';
 import {
@@ -147,6 +149,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
+            onClick={() => onNavigate('users')}
+            className="px-3.5 py-2 text-xs font-semibold border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/50 text-[#1264F4] dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Manajemen Akun</span>
+          </button>
+          <button
+            type="button"
             onClick={() => onNavigate('settings')}
             className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
@@ -167,6 +177,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             Periksa Verifikasi ({stats.pendingVerificationsCount})
           </button>
+        </div>
+      </div>
+
+      {/* Ringkasan Brief Proyek Utama & Rekening Pencairan Otomatis */}
+      <div className="bg-gradient-to-r from-[#071D49] to-[#0F2D6B] text-white rounded-xl p-4 sm:p-5 border border-blue-500/30 shadow-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="p-3 rounded-lg bg-white/10 border border-white/10">
+            <div className="text-blue-200 text-[11px] font-medium">1. Nama Pekerjaan Utama</div>
+            <div className="font-bold text-sm text-white mt-0.5">
+              {primaryProject?.name || 'Pembangunan Rumah di Gang Mahanggi Tenggarong'}
+            </div>
+            <div className="text-[11px] text-blue-200 mt-0.5">
+              {primaryProject?.location || 'Gang Mahanggi, Tenggarong'}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-white/10 border border-white/10">
+            <div className="text-blue-200 text-[11px] font-medium">
+              2. Pengguna Jasa (Pemilik Proyek)
+            </div>
+            <div className="font-bold text-sm text-white mt-0.5">
+              {primaryProject?.clientName || 'Citra Ayu Deswina Maharani'}
+            </div>
+            <div className="text-[11px] text-blue-200 mt-0.5">Owner / Pemberi Tugas</div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-white/10 border border-white/10">
+            <div className="text-blue-200 text-[11px] font-medium">
+              3. Penyedia Jasa (Kontraktor)
+            </div>
+            <div className="font-bold text-sm text-white mt-0.5">
+              {primaryProject?.contractorName || 'Muhajirin Kasim'}
+            </div>
+            <div className="text-[11px] text-blue-200 mt-0.5">Kontraktor Pelaksana</div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-emerald-500/20 border border-emerald-400/40">
+            <div className="flex items-center gap-1.5 text-emerald-300 text-[11px] font-bold">
+              <Landmark className="w-3.5 h-3.5" />
+              <span>Rekening Otomatis Dibayarkan</span>
+            </div>
+            <div className="font-bold text-sm text-white mt-0.5">MUHAJIRIN KASIM</div>
+            <div className="font-mono text-xs text-emerald-200 font-semibold mt-0.5">
+              Bank Mandiri · 1480025086508
+            </div>
+          </div>
         </div>
       </div>
 
@@ -208,7 +264,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Perbandingan target vs realisasi tahapan pada proyek utama:{' '}
                 <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {primaryProject?.name || 'Pembangunan Gedung Aula'}
+                  {primaryProject?.name || 'Pembangunan Rumah di Gang Mahanggi Tenggarong'}
                 </span>
               </p>
             </div>

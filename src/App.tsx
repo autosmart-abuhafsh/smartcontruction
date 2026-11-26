@@ -21,6 +21,8 @@ import {
   Sun,
   Sparkles,
   Cloud,
+  UserCog,
+  Lock,
 } from 'lucide-react';
 import { INITIAL_DATABASE } from './data/seedData';
 import {
@@ -68,7 +70,7 @@ import {
   UsersManagementView,
 } from './components/PaymentsTransactionsReportsView';
 
-const STORAGE_KEY = 'smartbuild_enterprise_db_v1';
+const STORAGE_KEY = 'smartbuild_enterprise_db_v2_mahanggi';
 const THEME_STORAGE_KEY = 'smartbuild_theme_dark_v1';
 const GAS_CONFIG_KEY = 'smartbuild_gas_config_v1';
 
@@ -126,6 +128,7 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState<MenuId>('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [isOwnerSettingsUnlocked, setIsOwnerSettingsUnlocked] = useState(false);
   const [loadingOverlay, setLoadingOverlay] = useState<{
     visible: boolean;
     message?: string;
@@ -570,9 +573,27 @@ export default function App() {
         (sc) => sc.projectId === targetVer.projectId
       );
       const autoRelease = scConfig?.autoReleaseOnVerification ?? true;
+      const today = new Date().toISOString().split('T')[0];
+      const nowTime = new Date().toISOString().replace('T', ' ').slice(0, 16);
+      const simHash = `0xSIMULATED_${Date.now().toString(16)}a8f4c2`;
+      const proofRef = `MANDIRI-AUTO-1480025086508-${Date.now().toString().slice(-4)}`;
+
+      let autoPaidSchedule: typeof prev.payment_schedules[0] | null = null;
 
       const updatedSchedules = prev.payment_schedules.map((s) => {
         if (s.milestoneId !== targetVer.milestoneId) return s;
+        if (newStatus === 'Disetujui' && approvedPercentage >= 100 && autoRelease && s.status !== 'Berhasil') {
+          autoPaidSchedule = s;
+          return {
+            ...s,
+            status: 'Berhasil' as const,
+            verificationId,
+            approvedByClient: true,
+            paidAt: today,
+            txHash: simHash,
+            proofRef,
+          };
+        }
         const nextPayStatus = evaluateSmartContractPaymentTrigger(
           newStatus,
           approvedPercentage,
@@ -586,7 +607,45 @@ export default function App() {
         };
       });
 
-      const simHash = `0xSIMULATED_${Date.now().toString(16)}a8f4c2`;
+      const targetProject = prev.projects.find((p) => p.id === targetVer.projectId);
+
+      const nextPayments = autoPaidSchedule
+        ? [
+            {
+              id: `pay-${Date.now()}`,
+              scheduleId: (autoPaidSchedule as typeof prev.payment_schedules[0]).id,
+              projectId: targetVer.projectId,
+              projectName: targetVer.projectName,
+              termName: `${(autoPaidSchedule as typeof prev.payment_schedules[0]).milestoneName} (${(autoPaidSchedule as typeof prev.payment_schedules[0]).percentage}%) -> Bank Mandiri 1480025086508 (MUHAJIRIN KASIM)`,
+              amount: (autoPaidSchedule as typeof prev.payment_schedules[0]).nominal,
+              status: 'Berhasil' as const,
+              processedAt: nowTime,
+              proofNumber: proofRef,
+            },
+            ...prev.payments,
+          ]
+        : prev.payments;
+
+      const nextTransactions = autoPaidSchedule
+        ? [
+            {
+              id: `TRX-DEMO-2026-${String(prev.transactions.length + 1).padStart(3, '0')}`,
+              date: today,
+              projectId: targetVer.projectId,
+              projectName: targetVer.projectName,
+              milestoneName: `${(autoPaidSchedule as typeof prev.payment_schedules[0]).milestoneName} (${(autoPaidSchedule as typeof prev.payment_schedules[0]).percentage}%)`,
+              sender: `${targetProject?.clientName || 'Citra Ayu Deswina Maharani'} (Pengguna Jasa)`,
+              receiver: 'MUHAJIRIN KASIM — Bank Mandiri 1480025086508 (Penyedia Jasa)',
+              nominal: (autoPaidSchedule as typeof prev.payment_schedules[0]).nominal,
+              paymentMethod: 'Simulasi Smart Contract Escrow (DEMO)' as const,
+              status: 'Berhasil (DEMO)' as const,
+              txHash: simHash,
+              isDemo: true,
+            },
+            ...prev.transactions,
+          ]
+        : prev.transactions;
+
       const updatedSmartContracts = prev.smart_contracts.map((sc) => {
         if (sc.projectId !== targetVer.projectId) return sc;
         return {
@@ -595,13 +654,16 @@ export default function App() {
           executionLogs: [
             {
               id: `scl-${Date.now()}`,
-              timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
-              event: `VerificationRecorded(${targetVer.milestoneName}, ${newStatus}, ${approvedPercentage}%)`,
+              timestamp: nowTime,
+              event:
+                newStatus === 'Disetujui' && approvedPercentage >= 100
+                  ? `AutoPayoutReleased(${targetVer.milestoneName} -> Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM)`
+                  : `VerificationRecorded(${targetVer.milestoneName}, ${newStatus}, ${approvedPercentage}%)`,
               txHash: simHash,
               status: 'SIMULATED_SUCCESS' as const,
               details:
                 newStatus === 'Disetujui' && approvedPercentage >= 100
-                  ? `Verifikasi tahapan ${targetVer.milestoneName} disetujui 100%. Termin pembayaran dibuka menjadi "Siap dibayarkan".`
+                  ? `Verifikasi tahapan ${targetVer.milestoneName} selesai 100%. Dana otomatis dibayarkan ke rekening MUHAJIRIN KASIM — Bank Mandiri (1480025086508).`
                   : `Status verifikasi tahapan ${targetVer.milestoneName}: ${newStatus}.`,
             },
             ...sc.executionLogs,
@@ -613,9 +675,13 @@ export default function App() {
         prev,
         'PROCESS_VERIFICATION',
         'Verifikasi Pekerjaan',
-        `Verifikasi tahapan "${targetVer.milestoneName}" (${targetVer.projectName}): ${newStatus} (${approvedPercentage}%). Progres proyek kini ${newOverallProgress}%.`,
-        newStatus === 'Disetujui' ? 'Progres disetujui' : 'Progres ditolak',
-        `Hasil Verifikasi: ${targetVer.milestoneName} (${newStatus})`
+        `Verifikasi tahapan "${targetVer.milestoneName}" (${targetVer.projectName}): ${newStatus} (${approvedPercentage}%).${
+          autoPaidSchedule
+            ? ' Pembayaran otomatis telah ditransfer ke MUHAJIRIN KASIM — Bank Mandiri 1480025086508.'
+            : ''
+        }`,
+        newStatus === 'Disetujui' ? 'Pembayaran berhasil' : 'Progres ditolak',
+        `Hasil Verifikasi & Pencairan Otomatis: ${targetVer.milestoneName} (${newStatus})`
       );
 
       return {
@@ -626,6 +692,8 @@ export default function App() {
         projects: updatedProjects,
         bim_models: updatedBimModels,
         payment_schedules: updatedSchedules,
+        payments: nextPayments,
+        transactions: nextTransactions,
         smart_contracts: updatedSmartContracts,
         activity_logs: nextLogs,
         notifications: nextNotifs,
@@ -641,7 +709,7 @@ export default function App() {
       const today = new Date().toISOString().split('T')[0];
       const nowTime = new Date().toISOString().replace('T', ' ').slice(0, 16);
       const simTxHash = `0xSIMULATED_${Date.now().toString(16)}e91b44d0`;
-      const proofRef = `INV-DEMO-2026-${String(prev.transactions.length + 1).padStart(4, '0')}`;
+      const proofRef = `MANDIRI-AUTO-1480025086508-T${targetSch.termNumber}`;
 
       const updatedSchedules = prev.payment_schedules.map((s) =>
         s.id === scheduleId
@@ -664,8 +732,8 @@ export default function App() {
         projectId: targetSch.projectId,
         projectName: targetSch.projectName,
         milestoneName: `${targetSch.milestoneName} (${targetSch.percentage}%)`,
-        sender: `${targetProject?.clientName || 'Budi Santoso'} (Pengguna Jasa)`,
-        receiver: `${targetProject?.contractorName || 'PT Maju Karya'} (Penyedia Jasa)`,
+        sender: `${targetProject?.clientName || 'Citra Ayu Deswina Maharani'} (Pengguna Jasa)`,
+        receiver: 'MUHAJIRIN KASIM — Bank Mandiri 1480025086508 (Penyedia Jasa)',
         nominal: targetSch.nominal,
         paymentMethod: 'Simulasi Smart Contract Escrow (DEMO)' as const,
         status: 'Berhasil (DEMO)' as const,
@@ -678,7 +746,7 @@ export default function App() {
         scheduleId: targetSch.id,
         projectId: targetSch.projectId,
         projectName: targetSch.projectName,
-        termName: `${targetSch.milestoneName} (${targetSch.percentage}%)`,
+        termName: `${targetSch.milestoneName} (${targetSch.percentage}%) -> Bank Mandiri 1480025086508 (MUHAJIRIN KASIM)`,
         amount: targetSch.nominal,
         status: 'Berhasil' as const,
         processedAt: nowTime,
@@ -694,10 +762,10 @@ export default function App() {
                 {
                   id: `scl-${Date.now()}`,
                   timestamp: nowTime,
-                  event: `MilestonePaymentReleased(${targetSch.milestoneName}, Rp${targetSch.nominal.toLocaleString('id-ID')})`,
+                  event: `AutoPayoutReleased(${targetSch.milestoneName}, Rp${targetSch.nominal.toLocaleString('id-ID')} -> Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM)`,
                   txHash: simTxHash,
                   status: 'SIMULATED_SUCCESS' as const,
-                  details: `Pembayaran simulasi Termin #${targetSch.termNumber} berhasil dieksekusi dan dicatat pada Riwayat Transaksi (DEMO).`,
+                  details: `Pembayaran Termin #${targetSch.termNumber} otomatis dicairkan ke MUHAJIRIN KASIM — Bank Mandiri (1480025086508).`,
                 },
                 ...sc.executionLogs,
               ],
@@ -709,11 +777,11 @@ export default function App() {
         prev,
         'EXECUTE_SIMULATED_PAYMENT',
         'Pembayaran',
-        `Pembayaran simulasi ${targetSch.milestoneName} (${targetSch.projectName}) sebesar Rp${targetSch.nominal.toLocaleString(
+        `Pembayaran ${targetSch.milestoneName} (${targetSch.projectName}) sebesar Rp${targetSch.nominal.toLocaleString(
           'id-ID'
-        )} berhasil dicairkan (DEMO).`,
+        )} berhasil dicairkan ke MUHAJIRIN KASIM — Bank Mandiri 1480025086508.`,
         'Pembayaran berhasil',
-        `Pembayaran Berhasil: ${targetSch.milestoneName} (DEMO)`
+        `Pembayaran Berhasil: ${targetSch.milestoneName} (Bank Mandiri 1480025086508)`
       );
 
       return {
@@ -864,6 +932,9 @@ export default function App() {
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{item.label}</span>
+                {item.id === 'settings' && !isOwnerSettingsUnlocked && (
+                  <Lock className="w-3.5 h-3.5 ml-auto text-amber-400 shrink-0" />
+                )}
               </button>
             );
           })}
@@ -889,7 +960,11 @@ export default function App() {
             onClick={() => {
               localStorage.removeItem(STORAGE_KEY);
               setDb(INITIAL_DATABASE);
-              triggerLoadingAnimation('Mereset Data Demo...', 'Mengembalikan data proyek Pembangunan Gedung Aula', 600);
+              triggerLoadingAnimation(
+                'Mereset Data Proyek...',
+                'Mengembalikan data proyek Pembangunan Rumah di Gang Mahanggi Tenggarong',
+                600
+              );
             }}
             className="w-full px-3 py-2 rounded-lg border border-white/15 hover:bg-white/10 text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5"
           >
@@ -931,10 +1006,23 @@ export default function App() {
             </div>
 
             {/* Mobile RBAC Switcher inside Drawer */}
-            <div className="px-4 py-3 border-b border-white/10 space-y-1.5 text-xs">
-              <label htmlFor="mobile-role-switch" className="text-slate-300 font-medium block">
-                Ganti Peran Simulasi (RBAC):
-              </label>
+            <div className="px-4 py-3 border-b border-white/10 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <label htmlFor="mobile-role-switch" className="text-slate-300 font-medium block">
+                  Ganti Peran Simulasi (RBAC):
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenu('users');
+                    setMobileSidebarOpen(false);
+                  }}
+                  className="text-[11px] font-semibold text-blue-300 hover:text-white flex items-center gap-1"
+                >
+                  <UserCog className="w-3.5 h-3.5" />
+                  <span>Kelola Akun</span>
+                </button>
+              </div>
               <select
                 id="mobile-role-switch"
                 value={currentUser.id}
@@ -1020,7 +1108,7 @@ export default function App() {
 
           {/* Right Zone: Role Switcher, Dark Mode Toggle, Notifications & Logout */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            <div className="hidden md:flex items-center gap-2 text-xs">
+            <div className="hidden md:flex items-center gap-1.5 text-xs">
               <label htmlFor="header-role-switch" className="text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
                 Simulasi Peran (RBAC):
               </label>
@@ -1036,6 +1124,15 @@ export default function App() {
                   </option>
                 ))}
               </select>
+              <button
+                type="button"
+                onClick={() => setActiveMenu('users')}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-[#1264F4] dark:text-blue-400 flex items-center gap-1 whitespace-nowrap"
+                title="Kelola, Edit, Hapus, atau Masuk Sebagai Pengguna / Admin"
+              >
+                <UserCog className="w-3.5 h-3.5" />
+                <span>Kelola Akun</span>
+              </button>
             </div>
 
             {/* Dark / Light Mode Toggle */}
@@ -1196,6 +1293,7 @@ export default function App() {
           {activeMenu === 'users' && (
             <UsersManagementView
               db={db}
+              currentUser={currentUser}
               onAddUser={(newUser) => {
                 setDb((prev) => ({
                   ...prev,
@@ -1208,6 +1306,38 @@ export default function App() {
                     },
                   ],
                 }));
+              }}
+              onUpdateUser={(updatedUser, loginAfterSave) => {
+                setDb((prev) => ({
+                  ...prev,
+                  users: prev.users.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+                }));
+                if (loginAfterSave || currentUser.id === updatedUser.id) {
+                  setCurrentUser(updatedUser);
+                  if (loginAfterSave) {
+                    triggerLoadingAnimation(
+                      `Masuk Sebagai ${updatedUser.name}...`,
+                      `Peran Aktif: ${getRoleLabel(updatedUser.role)}`,
+                      500
+                    );
+                  }
+                }
+              }}
+              onDeleteUser={(userId) => {
+                setDb((prev) => {
+                  if (prev.users.length <= 1) return prev;
+                  const remaining = prev.users.filter((u) => u.id !== userId);
+                  if (currentUser.id === userId) {
+                    setCurrentUser(remaining[0]);
+                  }
+                  return {
+                    ...prev,
+                    users: remaining,
+                  };
+                });
+              }}
+              onLoginAsUser={(userId) => {
+                handleRoleSwitch(userId);
               }}
               onToggleUserStatus={(userId) => {
                 setDb((prev) => ({
@@ -1228,6 +1358,8 @@ export default function App() {
               currentUser={currentUser}
               systemSettings={db.system_settings}
               appsScriptConfig={appsScriptConfig}
+              isOwnerUnlocked={isOwnerSettingsUnlocked}
+              onSetOwnerUnlocked={setIsOwnerSettingsUnlocked}
               onUpdateAppsScriptConfig={(nextCfg) => setAppsScriptConfig(nextCfg)}
               onReplaceDatabaseFromCloud={(cloudData) => {
                 setDb((prev) => ({

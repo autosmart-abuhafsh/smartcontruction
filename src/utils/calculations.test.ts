@@ -10,9 +10,17 @@ import {
   evaluateSmartContractPaymentTrigger,
   formatRupiah,
   validateMilestonesTotalPercentage,
+  verifyOwnerSettingsPassword,
 } from './calculations';
 import { ContractMilestone, PaymentSchedule, Project } from '../types/smartbuild';
 import { isValidAppsScriptUrl } from '../services/appsScriptService';
+
+test('verifyOwnerSettingsPassword validates website owner password 2026', () => {
+  assert.equal(verifyOwnerSettingsPassword('2026'), true);
+  assert.equal(verifyOwnerSettingsPassword(' 2026 '), true);
+  assert.equal(verifyOwnerSettingsPassword('2025'), false);
+  assert.equal(verifyOwnerSettingsPassword(''), false);
+});
 
 test('isValidAppsScriptUrl validates Google Apps Script Web App deployment URLs', () => {
   assert.equal(

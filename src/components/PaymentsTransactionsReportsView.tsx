@@ -19,6 +19,15 @@ import {
   CloudDownload,
   Globe,
   Check,
+  Edit2,
+  Trash2,
+  LogIn,
+  Lock,
+  Unlock,
+  EyeOff,
+  UserCheck,
+  KeyRound,
+  Landmark,
 } from 'lucide-react';
 import {
   PaymentSchedule,
@@ -33,6 +42,7 @@ import {
   formatDateID,
   formatRupiah,
   getRoleLabel,
+  verifyOwnerSettingsPassword,
 } from '../utils/calculations';
 import {
   AppsScriptConfig,
@@ -110,6 +120,32 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
             <Cpu className="w-3.5 h-3.5" />
             <span>Konfigurasi Smart Contract</span>
           </button>
+        </div>
+      </div>
+
+      {/* Rekening Otomatis Dibayarkan Setelah Pekerjaan Selesai */}
+      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#10B981] text-white flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-emerald-900 dark:text-emerald-200 text-sm">
+              Rekening Otomatis Dibayarkan Setelah Pekerjaan Selesai (Smart Contract Auto-Payout)
+            </div>
+            <div className="text-emerald-800 dark:text-emerald-300 mt-0.5">
+              Setiap tahapan pekerjaan pada <strong>Pembangunan Rumah di Gang Mahanggi Tenggarong</strong> yang telah selesai &amp; disetujui verifikasinya akan otomatis dicairkan ke rekening Penyedia Jasa:
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 shrink-0">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Penerima Pencairan Otomatis
+          </div>
+          <div className="font-bold text-slate-900 dark:text-white text-sm">MUHAJIRIN KASIM</div>
+          <div className="font-mono font-bold text-[#1264F4] dark:text-blue-400">
+            Bank Mandiri · 1480025086508
+          </div>
         </div>
       </div>
 
@@ -1033,22 +1069,36 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
 
 interface UsersManagementViewProps {
   db: SmartBuildDatabase;
+  currentUser: User;
   onAddUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
+  onUpdateUser: (user: User, loginAfterSave?: boolean) => void;
+  onDeleteUser: (userId: string) => void;
+  onLoginAsUser: (userId: string) => void;
   onToggleUserStatus: (userId: string) => void;
 }
 
 export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   db,
+  currentUser,
   onAddUser,
+  onUpdateUser,
+  onDeleteUser,
+  onLoginAsUser,
   onToggleUserStatus,
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('contractor');
+  const [role, setRole] = useState<UserRole>('super_admin');
   const [orgName, setOrgName] = useState('PT Karya Konstruksi');
-  const [position, setPosition] = useState('Site Manager');
+  const [position, setPosition] = useState('Administrator / Project Lead');
   const [phone, setPhone] = useState('0812-9000-8000');
   const [showAdd, setShowAdd] = useState(false);
+
+  const [roleFilter, setRoleFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1057,37 +1107,94 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       name: name.trim(),
       email: email.trim(),
       role,
-      organizationId: 'org-3',
-      organizationName: orgName.trim(),
-      position: position.trim(),
-      phone: phone.trim(),
+      organizationId: `org-${Date.now()}`,
+      organizationName: orgName.trim() || 'SmartBuild Partner',
+      position: position.trim() || 'Anggota Tim',
+      phone: phone.trim() || '0812-0000-0000',
       status: 'Aktif',
     });
+    setFeedbackMsg(`Akun "${name.trim()}" (${getRoleLabel(role)}) berhasil ditambahkan.`);
     setName('');
     setEmail('');
     setShowAdd(false);
   };
+
+  const filteredUsers = db.users.filter((u) => {
+    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+    const q = searchQuery.toLowerCase();
+    const matchesQuery =
+      !q ||
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.organizationName.toLowerCase().includes(q) ||
+      getRoleLabel(u.role).toLowerCase().includes(q);
+    return matchesRole && matchesQuery;
+  });
 
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
-            Manajemen Pengguna &amp; Organisasi (RBAC)
+            Manajemen Admin, Pengguna &amp; Peran (RBAC)
           </h1>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Kelola hak akses pengguna platform, perusahaan terdaftar, dan peran Role-Based Access
-            Control.
+            Atur, tambah, edit, hapus, atau masuk langsung sebagai pengguna/admin tertentu pada
+            platform SmartBuild.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowAdd(!showAdd)}
-          className="px-4 py-2 rounded-lg bg-[#1264F4] text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+          className="px-4 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Tambah Pengguna</span>
+          <span>Tambah Admin / Pengguna</span>
         </button>
+      </div>
+
+      {feedbackMsg && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
+          <span>{feedbackMsg}</span>
+          <button
+            type="button"
+            onClick={() => setFeedbackMsg(null)}
+            className="text-emerald-700 dark:text-emerald-300 font-bold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Filter & Search Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari nama admin/pengguna, email, perusahaan, atau peran..."
+            className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="usr-role-filter" className="font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+            Filter Peran:
+          </label>
+          <select
+            id="usr-role-filter"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+          >
+            <option value="ALL">Semua Peran ({db.users.length})</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="client">Pengguna Jasa (Owner)</option>
+            <option value="contractor">Penyedia Jasa (Kontraktor)</option>
+            <option value="verifikator">Verifikator / Pengawas</option>
+          </select>
+        </div>
       </div>
 
       {showAdd && (
@@ -1095,6 +1202,18 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
           onSubmit={handleCreate}
           className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs"
         >
+          <div className="sm:col-span-3 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="font-bold text-sm text-[#071D49] dark:text-white">
+              Tambah Akun Admin / Pengguna Baru
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowAdd(false)}
+              className="text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
           <div>
             <label
               htmlFor="usr-new-name"
@@ -1107,6 +1226,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Ir. Ahmad Fauzi"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
               required
             />
@@ -1123,6 +1243,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="ahmad@smartbuild.id"
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
               required
             />
@@ -1132,7 +1253,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               htmlFor="usr-new-role"
               className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
             >
-              Peran (Role)
+              Peran (Role RBAC)
             </label>
             <select
               id="usr-new-role"
@@ -1140,10 +1261,10 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               onChange={(e) => setRole(e.target.value as UserRole)}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
             >
+              <option value="super_admin">Super Admin</option>
               <option value="client">Pengguna Jasa (Owner)</option>
               <option value="contractor">Penyedia Jasa (Kontraktor)</option>
               <option value="verifikator">Verifikator / Pengawas</option>
-              <option value="super_admin">Super Admin</option>
             </select>
           </div>
           <div>
@@ -1166,22 +1287,32 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               htmlFor="usr-new-pos"
               className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
             >
-              Jabatan
+              Jabatan &amp; No. Telepon
             </label>
-            <input
-              id="usr-new-pos"
-              type="text"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                id="usr-new-pos"
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="Jabatan"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+              />
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="No. Telepon"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+              />
+            </div>
           </div>
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-[#071D49] dark:bg-blue-600 text-white font-semibold rounded-lg"
+              className="w-full py-2 px-4 bg-[#071D49] dark:bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
             >
-              Simpan Pengguna
+              Simpan Akun Baru
             </button>
           </div>
         </form>
@@ -1195,40 +1326,372 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
               <th className="py-3 px-4">Peran (RBAC)</th>
               <th className="py-3 px-4">Organisasi &amp; Jabatan</th>
               <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4 text-right">Aksi</th>
+              <th className="py-3 px-4 text-right">Aksi (Masuk / Edit / Hapus)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {db.users.map((u) => (
-              <tr key={u.id}>
-                <td className="py-3.5 px-4">
-                  <div className="font-bold text-[#071D49] dark:text-white">{u.name}</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{u.email}</div>
-                </td>
-                <td className="py-3.5 px-4 font-semibold text-[#1264F4] dark:text-blue-400">
-                  {getRoleLabel(u.role)}
-                </td>
-                <td className="py-3.5 px-4">
-                  <div className="font-medium text-slate-800 dark:text-slate-200">
-                    {u.organizationName}
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{u.position}</div>
-                </td>
-                <td className="py-3.5 px-4 font-bold text-[#10B981]">{u.status}</td>
-                <td className="py-3.5 px-4 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onToggleUserStatus(u.id)}
-                    className="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium"
-                  >
-                    {u.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filteredUsers.map((u) => {
+              const isCurrent = u.id === currentUser.id;
+              return (
+                <tr
+                  key={u.id}
+                  className={
+                    isCurrent
+                      ? 'bg-blue-50/50 dark:bg-blue-950/20'
+                      : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                  }
+                >
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[#071D49] dark:text-white">{u.name}</span>
+                      {isCurrent && (
+                        <span className="px-2 py-0.5 rounded bg-[#1264F4] text-white text-[10px] font-bold">
+                          Aktif Digunakan
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {u.email} · {u.phone}
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 font-semibold text-[#1264F4] dark:text-blue-400">
+                    {getRoleLabel(u.role)}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="font-medium text-slate-800 dark:text-slate-200">
+                      {u.organizationName}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {u.position}
+                    </div>
+                    {u.bankAccountNumber && (
+                      <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-mono text-[11px] font-bold">
+                        <Landmark className="w-3 h-3" />
+                        <span>
+                          {u.bankName || 'Bank Mandiri'} · {u.bankAccountNumber} a.n.{' '}
+                          {u.bankAccountHolder || u.name.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <button
+                      type="button"
+                      onClick={() => onToggleUserStatus(u.id)}
+                      className={`font-bold underline-offset-2 hover:underline ${
+                        u.status === 'Aktif' ? 'text-[#10B981]' : 'text-amber-500'
+                      }`}
+                      title="Klik untuk mengubah status Aktif/Nonaktif"
+                    >
+                      {u.status}
+                    </button>
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onLoginAsUser(u.id);
+                          setFeedbackMsg(
+                            `Berhasil masuk sebagai "${u.name}" (${getRoleLabel(u.role)}).`
+                          );
+                        }}
+                        className={`px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition-colors ${
+                          isCurrent
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-[#1264F4] hover:bg-blue-700 text-white'
+                        }`}
+                        title="Masuk dan gunakan aplikasi sebagai pengguna ini"
+                      >
+                        {isCurrent ? (
+                          <>
+                            <UserCheck className="w-3.5 h-3.5" />
+                            <span>Sedang Masuk</span>
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="w-3.5 h-3.5" />
+                            <span>Masuk Sebagai</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingUser({ ...u })}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1"
+                        title="Edit data pengguna / admin"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-[#1264F4]" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={db.users.length <= 1}
+                        onClick={() => setConfirmDeleteUser(u)}
+                        className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 font-semibold flex items-center gap-1 disabled:opacity-40"
+                        title="Hapus akun pengguna / admin"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Modal Edit Admin / Pengguna & Masuk Sebagai Pengguna */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 text-xs shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h2 className="text-base font-bold text-[#071D49] dark:text-white">
+                  Edit Akun Admin / Pengguna
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Ubah nama, peran RBAC, perusahaan, atau langsung masuk sebagai pengguna ini.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="sm:col-span-2">
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Lengkap Pengguna / Admin
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.name}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Peran (Role RBAC)
+                </label>
+                <select
+                  value={editingUser.role}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, role: e.target.value as UserRole })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-semibold"
+                >
+                  <option value="super_admin">Super Admin</option>
+                  <option value="client">Pengguna Jasa (Owner)</option>
+                  <option value="contractor">Penyedia Jasa (Kontraktor)</option>
+                  <option value="verifikator">Verifikator / Pengawas</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Status Akun
+                </label>
+                <select
+                  value={editingUser.status}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      status: e.target.value as 'Aktif' | 'Nonaktif',
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-semibold"
+                >
+                  <option value="Aktif">Aktif</option>
+                  <option value="Nonaktif">Nonaktif</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nomor Telepon
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.phone}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Organisasi / Perusahaan
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.organizationName}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, organizationName: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Jabatan
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.position}
+                  onChange={(e) => setEditingUser({ ...editingUser, position: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Bank Pencairan Otomatis
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.bankName || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, bankName: e.target.value })}
+                  placeholder="Contoh: Bank Mandiri"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  No. Rekening &amp; Atas Nama
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={editingUser.bankAccountNumber || ''}
+                    onChange={(e) =>
+                      setEditingUser({ ...editingUser, bankAccountNumber: e.target.value })
+                    }
+                    placeholder="1480025086508"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-mono"
+                  />
+                  <input
+                    type="text"
+                    value={editingUser.bankAccountHolder || ''}
+                    onChange={(e) =>
+                      setEditingUser({ ...editingUser, bankAccountHolder: e.target.value })
+                    }
+                    placeholder="MUHAJIRIN KASIM"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!editingUser.name.trim()) return;
+                  onUpdateUser(editingUser, false);
+                  setFeedbackMsg(`Data akun "${editingUser.name}" berhasil diperbarui.`);
+                  setEditingUser(null);
+                }}
+                className="px-3.5 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold"
+              >
+                Simpan Perubahan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!editingUser.name.trim()) return;
+                  onUpdateUser(editingUser, true);
+                  setFeedbackMsg(
+                    `Data disimpan & Anda kini masuk sebagai "${editingUser.name}" (${getRoleLabel(
+                      editingUser.role
+                    )}).`
+                  );
+                  setEditingUser(null);
+                }}
+                className="px-3.5 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Simpan &amp; Masuk Sebagai Pengguna Ini</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Hapus Admin / Pengguna */}
+      {confirmDeleteUser && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 text-xs shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Hapus Akun Admin / Pengguna?
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Apakah Anda yakin ingin menghapus akun{' '}
+                  <strong>{confirmDeleteUser.name}</strong> ({getRoleLabel(confirmDeleteUser.role)})
+                  dari daftar pengguna SmartBuild?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteUser(null)}
+                className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteUser(confirmDeleteUser.id);
+                  setFeedbackMsg(`Akun "${confirmDeleteUser.name}" telah dihapus.`);
+                  setConfirmDeleteUser(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold"
+              >
+                Ya, Hapus Akun
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1238,6 +1701,8 @@ interface SettingsViewProps {
   currentUser: User;
   systemSettings: SystemSettings;
   appsScriptConfig: AppsScriptConfig;
+  isOwnerUnlocked: boolean;
+  onSetOwnerUnlocked: (unlocked: boolean) => void;
   onUpdateAppsScriptConfig: (next: AppsScriptConfig) => void;
   onReplaceDatabaseFromCloud: (cloudData: Partial<SmartBuildDatabase>) => void;
   onUpdateProfile: (updated: User) => void;
@@ -1249,11 +1714,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   currentUser,
   systemSettings,
   appsScriptConfig,
+  isOwnerUnlocked,
+  onSetOwnerUnlocked,
   onUpdateAppsScriptConfig,
   onReplaceDatabaseFromCloud,
   onUpdateProfile,
   onUpdateSystemSettings,
 }) => {
+  const [ownerPasswordInput, setOwnerPasswordInput] = useState('');
+  const [showOwnerPassword, setShowOwnerPassword] = useState(false);
+  const [ownerPasswordError, setOwnerPasswordError] = useState<string | null>(null);
+
   const [name, setName] = useState(currentUser.name);
   const [phone, setPhone] = useState(currentUser.phone);
   const [position, setPosition] = useState(currentUser.position);
@@ -1267,6 +1738,99 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeCodeFile, setActiveCodeFile] = useState<'code.gs' | 'setup.gs'>('code.gs');
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [isTestingGas, setIsTestingGas] = useState(false);
+
+  const handleUnlockOwnerSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verifyOwnerSettingsPassword(ownerPasswordInput)) {
+      setOwnerPasswordError(null);
+      setOwnerPasswordInput('');
+      onSetOwnerUnlocked(true);
+    } else {
+      setOwnerPasswordError(
+        'Password salah! Halaman Pengaturan hanya dapat diakses oleh Pemilik Website Aplikasi.'
+      );
+    }
+  };
+
+  if (!isOwnerUnlocked) {
+    return (
+      <div className="max-w-md mx-auto my-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-5 text-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#071D49] dark:bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
+                Akses Terproteksi
+              </span>
+              <h1 className="text-base sm:text-lg font-bold text-[#071D49] dark:text-white mt-0.5">
+                Verifikasi Pemilik Website Aplikasi
+              </h1>
+            </div>
+          </div>
+
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Menu <strong>Pengaturan</strong> (Konfigurasi Database Google Apps Script, Integrasi
+            Vercel, dan Sistem Inti) dikunci menggunakan password khusus pemilik website aplikasi.
+          </p>
+
+          {ownerPasswordError && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 font-medium">
+              {ownerPasswordError}
+            </div>
+          )}
+
+          <form onSubmit={handleUnlockOwnerSettings} className="space-y-4">
+            <div>
+              <label
+                htmlFor="owner-settings-password"
+                className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
+              >
+                Password Pemilik Website Aplikasi
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+                <input
+                  id="owner-settings-password"
+                  type={showOwnerPassword ? 'text' : 'password'}
+                  value={ownerPasswordInput}
+                  onChange={(e) => {
+                    setOwnerPasswordInput(e.target.value);
+                    if (ownerPasswordError) setOwnerPasswordError(null);
+                  }}
+                  placeholder="Masukkan password pemilik..."
+                  className="w-full pl-10 pr-10 py-2.5 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
+                  autoFocus
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOwnerPassword((v) => !v)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Tampilkan atau sembunyikan password"
+                >
+                  {showOwnerPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#1264F4] hover:bg-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
+            >
+              <Unlock className="w-4 h-4" />
+              <span>Buka Pengaturan Pemilik</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const handleCopyCode = (fileName: 'code.gs' | 'setup.gs') => {
     const content = fileName === 'code.gs' ? CODE_GS_SOURCE : SETUP_GS_SOURCE;
@@ -1334,14 +1898,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5">
-        <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
-          Pengaturan Sistem, Database Google Apps Script &amp; Deployment Vercel
-        </h1>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-          Konfigurasi database Google Sheets berbasis Apps Script (`code.gs` &amp; `setup.gs`),
-          integrasi Vercel (`vercel.app`), serta profil pengguna.
-        </p>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold mb-1">
+            <Unlock className="w-3.5 h-3.5" />
+            <span>Akses Pemilik Website Aplikasi Terbuka</span>
+          </div>
+          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
+            Pengaturan Sistem, Database Google Apps Script &amp; Deployment Vercel
+          </h1>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+            Konfigurasi database Google Sheets berbasis Apps Script (`code.gs` &amp; `setup.gs`),
+            integrasi Vercel (`vercel.app`), serta profil pengguna.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onSetOwnerUnlocked(false)}
+          className="px-3.5 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 shrink-0"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>Kunci Pengaturan</span>
+        </button>
       </div>
 
       {savedMsg && (

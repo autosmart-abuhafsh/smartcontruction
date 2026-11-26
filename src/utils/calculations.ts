@@ -278,3 +278,10 @@ export function computeDashboardStats(
     pendingVerificationsCount,
   };
 }
+
+export const OWNER_SETTINGS_PASSWORD = '2026';
+
+export function verifyOwnerSettingsPassword(input: string): boolean {
+  return input.trim() === OWNER_SETTINGS_PASSWORD;
+}
+

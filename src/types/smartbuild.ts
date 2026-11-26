@@ -67,6 +67,9 @@ export interface User {
   organizationName: string;
   position: string;
   phone: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
   status: 'Aktif' | 'Nonaktif';
   createdAt: string;
 }
@@ -239,6 +242,9 @@ export interface SmartContractConfig {
   deploymentStatus: 'Active (Simulasi Fungsional MVP)' | 'Draft Konfigurasi' | 'Paused';
   autoReleaseOnVerification: boolean;
   requireClientCoSign: boolean;
+  beneficiaryName?: string;
+  beneficiaryBank?: string;
+  beneficiaryAccountNumber?: string;
   lastTxHash: string;
   executionLogs: {
     id: string;

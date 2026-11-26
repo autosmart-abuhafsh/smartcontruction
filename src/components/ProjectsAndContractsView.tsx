@@ -69,11 +69,11 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
   // Form fields
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<Project['category']>('Fasilitas Publik');
+  const [category, setCategory] = useState<Project['category']>('Residensial');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [clientName, setClientName] = useState('Budi Santoso');
-  const [contractorName, setContractorName] = useState('PT Maju Karya');
+  const [location, setLocation] = useState('Gang Mahanggi, Tenggarong');
+  const [clientName, setClientName] = useState('Citra Ayu Deswina Maharani');
+  const [contractorName, setContractorName] = useState('Muhajirin Kasim');
   const [verifikatorName, setVerifikatorName] = useState('Ir. Dian Permatasari, MT');
   const [contractValue, setContractValue] = useState<number>(100000000);
   const [startDate, setStartDate] = useState('2026-12-01');
@@ -88,13 +88,13 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
   const openCreateModal = () => {
     setEditingProject(null);
     setName('');
-    setCategory('Fasilitas Publik');
+    setCategory('Residensial');
     setDescription('');
-    setLocation('');
-    setClientName(currentUser.role === 'client' ? currentUser.name : 'Budi Santoso');
-    setContractorName('PT Maju Karya');
+    setLocation('Gang Mahanggi, Tenggarong');
+    setClientName(currentUser.role === 'client' ? currentUser.name : 'Citra Ayu Deswina Maharani');
+    setContractorName('Muhajirin Kasim');
     setVerifikatorName('Ir. Dian Permatasari, MT');
-    setContractValue(150000000);
+    setContractValue(100000000);
     setStartDate('2026-12-01');
     setTargetEndDate('2027-05-30');
     setStatus('Draft');
