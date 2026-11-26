@@ -50,6 +50,8 @@ import {
   AppsScriptConfig,
   DEFAULT_APPS_SCRIPT_CONFIG,
   isValidAppsScriptUrl,
+  pullDatabaseFromAppsScript,
+  resolveInitialAppsScriptConfig,
   syncDatabaseToAppsScript,
 } from './services/appsScriptService';
 import { SmartBuildLoadingOverlay, SmartBuildLogo } from './components/SmartBuildBrand';
@@ -113,13 +115,10 @@ export default function App() {
   const [appsScriptConfig, setAppsScriptConfig] = useState<AppsScriptConfig>(() => {
     try {
       const saved = localStorage.getItem(GAS_CONFIG_KEY);
-      if (saved) {
-        return { ...DEFAULT_APPS_SCRIPT_CONFIG, ...JSON.parse(saved) };
-      }
+      return resolveInitialAppsScriptConfig(saved);
     } catch {
-      // ignore storage errors
+      return DEFAULT_APPS_SCRIPT_CONFIG;
     }
-    return DEFAULT_APPS_SCRIPT_CONFIG;
   });
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -155,6 +154,50 @@ export default function App() {
       // ignore storage errors
     }
   }, [isDarkMode]);
+
+  // Initial Cloud Database Hydration when Vercel Environment Variable or Apps Script URL is active
+  useEffect(() => {
+    if (!isValidAppsScriptUrl(appsScriptConfig.webAppUrl)) return;
+    let isCancelled = false;
+
+    const bootstrapFromAppsScript = async () => {
+      const pullRes = await pullDatabaseFromAppsScript(appsScriptConfig.webAppUrl);
+      if (isCancelled) return;
+      if (
+        pullRes.ok &&
+        pullRes.data &&
+        Array.isArray(pullRes.data.projects) &&
+        pullRes.data.projects.length > 0
+      ) {
+        setDb((prev) => ({
+          ...prev,
+          ...pullRes.data,
+        }));
+        setAppsScriptConfig((prev) => ({
+          ...prev,
+          connectionStatus: 'connected',
+          lastSyncedAt: new Date().toISOString(),
+          lastMessage: prev.isFromEnv
+            ? `Database disinkronkan dari Google Sheets via Vercel Env (${prev.envVarName || 'VITE_APPS_SCRIPT_URL'}).`
+            : 'Database berhasil dimuat dari Google Sheets Apps Script.',
+        }));
+      } else if (appsScriptConfig.autoSync) {
+        const pushRes = await syncDatabaseToAppsScript(appsScriptConfig.webAppUrl, db);
+        if (isCancelled) return;
+        setAppsScriptConfig((prev) => ({
+          ...prev,
+          connectionStatus: pushRes.ok ? 'connected' : 'error',
+          lastSyncedAt: pushRes.timestamp || prev.lastSyncedAt,
+          lastMessage: pushRes.message,
+        }));
+      }
+    };
+
+    void bootstrapFromAppsScript();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {

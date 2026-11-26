@@ -2,10 +2,38 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const resolvedAppsScriptUrl =
+    env.VITE_APPS_SCRIPT_URL ||
+    env.APPS_SCRIPT_URL ||
+    env.VITE_GAS_URL ||
+    env.GAS_URL ||
+    env.VITE_GOOGLE_APPS_SCRIPT_URL ||
+    env.GOOGLE_APPS_SCRIPT_URL ||
+    env.VITE_APPS_SCRIPT_WEBAPP_URL ||
+    env.APPS_SCRIPT_WEBAPP_URL ||
+    process.env.VITE_APPS_SCRIPT_URL ||
+    process.env.APPS_SCRIPT_URL ||
+    process.env.VITE_GAS_URL ||
+    process.env.GAS_URL ||
+    '';
+
+  const resolvedAutoSync =
+    env.VITE_APPS_SCRIPT_AUTO_SYNC ||
+    env.APPS_SCRIPT_AUTO_SYNC ||
+    process.env.VITE_APPS_SCRIPT_AUTO_SYNC ||
+    process.env.APPS_SCRIPT_AUTO_SYNC ||
+    'true';
+
   return {
+    envPrefix: ['VITE_', 'APPS_SCRIPT_', 'GAS_', 'GOOGLE_APPS_SCRIPT_'],
+    define: {
+      'import.meta.env.VITE_RESOLVED_APPS_SCRIPT_URL': JSON.stringify(resolvedAppsScriptUrl),
+      'import.meta.env.VITE_RESOLVED_APPS_SCRIPT_AUTO_SYNC': JSON.stringify(resolvedAutoSync),
+    },
     plugins: [
       react(),
       tailwindcss(),

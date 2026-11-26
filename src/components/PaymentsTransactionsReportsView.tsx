@@ -2256,6 +2256,70 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         </div>
 
+        {/* VERCEL ENVIRONMENT VARIABLE QUICK SETUP BOX */}
+        <div className="p-4 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 space-y-2.5 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="font-bold text-[#071D49] dark:text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#1264F4] dark:text-blue-400" />
+              <span>Integrasi Environment Variable di Vercel Saat Publish:</span>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-bold text-[11px] w-fit ${
+                appsScriptConfig.isFromEnv
+                  ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-blue-100 dark:bg-blue-900/70 text-[#1264F4] dark:text-blue-300'
+              }`}
+            >
+              {appsScriptConfig.isFromEnv
+                ? `Terdeteksi dari Env: ${appsScriptConfig.envVarName || 'VITE_APPS_SCRIPT_URL'}`
+                : 'Siap Menerima Env Vercel'}
+            </span>
+          </div>
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+            Ketika Anda mem-publish aplikasi ini di <strong>Vercel</strong>, buka{' '}
+            <strong>Project Settings &rarr; Environment Variables</strong> di dashboard Vercel, lalu
+            tambahkan variabel berikut agar aplikasi otomatis terhubung ke database Google Sheets
+            Apps Script tanpa perlu input manual:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                  Key / Nama Environment Variable (Utama)
+                </div>
+                <code className="font-mono font-bold text-[#1264F4] dark:text-blue-400 text-xs">
+                  VITE_APPS_SCRIPT_URL
+                </code>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText('VITE_APPS_SCRIPT_URL');
+                  setSavedMsg('Nama variabel VITE_APPS_SCRIPT_URL berhasil disalin!');
+                }}
+                className="px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold flex items-center gap-1"
+              >
+                <Copy className="w-3 h-3" />
+                <span>Salin Key</span>
+              </button>
+            </div>
+            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                Value / Nilai Environment Variable
+              </div>
+              <code className="font-mono text-slate-700 dark:text-slate-200 text-[11px] break-all">
+                {gasUrl || 'https://script.google.com/macros/s/AKfycbz.../exec'}
+              </code>
+            </div>
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Catatan: Sistem juga otomatis mengenali nama variabel{' '}
+            <code className="font-mono font-semibold">APPS_SCRIPT_URL</code> atau{' '}
+            <code className="font-mono font-semibold">GAS_URL</code> jika Anda memasukkannya tanpa
+            awalan <code className="font-mono">VITE_</code> di Vercel.
+          </div>
+        </div>
+
         {/* Web App URL Form & Sync Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end text-xs">
           <div className="lg:col-span-7">
@@ -2410,14 +2474,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="flex items-center gap-2.5 text-[#071D49] dark:text-white">
           <Globe className="w-5 h-5 text-[#1264F4]" />
           <h2 className="text-base font-bold">
-            Integrasi Deployment `vercel.app` (`vercel.json` Terkonfigurasi)
+            Integrasi Deployment `vercel.app` (`vercel.json` &amp; `.npmrc` Terkonfigurasi)
           </h2>
         </div>
         <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-          Proyek ini telah dilengkapi konfigurasi <code>/vercel.json</code>, aset logo pencarian{' '}
-          <code>/public/smartbuild-logo.svg</code>, serta <code>/public/favicon.svg</code> sehingga
-          siap langsung di-publish ke <strong>vercel.app</strong> melalui GitHub repository atau
-          perintah CLI <code>npx vercel --prod</code>.
+          Konflik <code>esbuild</code> peer dependency pada build Vercel telah diperbaiki melalui{' '}
+          <code>package.json</code>, <code>.npmrc</code> (<code>legacy-peer-deps=true</code>), dan{' '}
+          <code>vercel.json</code> (<code>&quot;installCommand&quot;: &quot;npm install --legacy-peer-deps&quot;</code>).
+          Masukkan URL Web App Google Apps Script Anda pada menu Environment Variables di Vercel
+          dengan key <code>VITE_APPS_SCRIPT_URL</code> (atau <code>APPS_SCRIPT_URL</code>) saat
+          publish.
         </p>
       </div>
 

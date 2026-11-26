@@ -6,23 +6,112 @@ export interface AppsScriptConfig {
   lastSyncedAt: string | null;
   connectionStatus: 'disconnected' | 'connected' | 'syncing' | 'error';
   lastMessage: string;
+  isFromEnv?: boolean;
+  envVarName?: string;
 }
 
-export const DEFAULT_APPS_SCRIPT_CONFIG: AppsScriptConfig = {
-  webAppUrl: '',
-  autoSync: false,
-  lastSyncedAt: null,
-  connectionStatus: 'disconnected',
-  lastMessage: 'Mode Penyimpanan Lokal Aktif (Siap dihubungkan ke Google Apps Script Web App URL).',
-};
-
 export function isValidAppsScriptUrl(url: string): boolean {
-  const trimmed = url.trim();
+  const trimmed = (url || '').trim();
   if (!trimmed) return false;
+  if (trimmed.includes('YOUR_DEPLOYMENT_ID')) return false;
   return (
     trimmed.startsWith('https://script.google.com/macros/s/') &&
     (trimmed.endsWith('/exec') || trimmed.endsWith('/dev'))
   );
+}
+
+export function getEnvAppsScriptUrl(): { url: string; varName: string } {
+  try {
+    const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env || {};
+    const candidates: Array<[string, string | undefined]> = [
+      ['VITE_APPS_SCRIPT_URL', metaEnv.VITE_APPS_SCRIPT_URL],
+      ['APPS_SCRIPT_URL', metaEnv.APPS_SCRIPT_URL],
+      ['VITE_GAS_URL', metaEnv.VITE_GAS_URL],
+      ['GAS_URL', metaEnv.GAS_URL],
+      ['VITE_GOOGLE_APPS_SCRIPT_URL', metaEnv.VITE_GOOGLE_APPS_SCRIPT_URL],
+      ['GOOGLE_APPS_SCRIPT_URL', metaEnv.GOOGLE_APPS_SCRIPT_URL],
+      ['VITE_RESOLVED_APPS_SCRIPT_URL', metaEnv.VITE_RESOLVED_APPS_SCRIPT_URL],
+    ];
+
+    for (const [name, val] of candidates) {
+      if (val && isValidAppsScriptUrl(val)) {
+        return {
+          url: val.trim(),
+          varName: name === 'VITE_RESOLVED_APPS_SCRIPT_URL' ? 'VITE_APPS_SCRIPT_URL / APPS_SCRIPT_URL' : name,
+        };
+      }
+    }
+  } catch {
+    // ignore env lookup errors in non-Vite test environments
+  }
+  return { url: '', varName: '' };
+}
+
+export function getEnvAppsScriptAutoSync(): boolean {
+  try {
+    const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env || {};
+    const raw =
+      metaEnv.VITE_APPS_SCRIPT_AUTO_SYNC ||
+      metaEnv.APPS_SCRIPT_AUTO_SYNC ||
+      metaEnv.VITE_RESOLVED_APPS_SCRIPT_AUTO_SYNC ||
+      'true';
+    return String(raw).toLowerCase() !== 'false';
+  } catch {
+    return true;
+  }
+}
+
+const detectedEnv = getEnvAppsScriptUrl();
+const detectedAutoSync = getEnvAppsScriptAutoSync();
+
+export const DEFAULT_APPS_SCRIPT_CONFIG: AppsScriptConfig = {
+  webAppUrl: detectedEnv.url,
+  autoSync: detectedEnv.url ? detectedAutoSync : false,
+  lastSyncedAt: null,
+  connectionStatus: detectedEnv.url ? 'connected' : 'disconnected',
+  lastMessage: detectedEnv.url
+    ? `Terhubung otomatis dari Environment Variable Vercel (${detectedEnv.varName}).`
+    : 'Mode Penyimpanan Lokal Aktif (Siap dihubungkan ke Google Apps Script via Vercel Environment Variable VITE_APPS_SCRIPT_URL).',
+  isFromEnv: Boolean(detectedEnv.url),
+  envVarName: detectedEnv.varName || 'VITE_APPS_SCRIPT_URL',
+};
+
+export function resolveInitialAppsScriptConfig(savedRaw: string | null): AppsScriptConfig {
+  const envInfo = getEnvAppsScriptUrl();
+  const envAutoSync = getEnvAppsScriptAutoSync();
+
+  if (savedRaw) {
+    try {
+      const parsed = JSON.parse(savedRaw) as Partial<AppsScriptConfig>;
+      const savedUrl = (parsed.webAppUrl || '').trim();
+
+      // Priority 1: If Vercel Environment Variable is configured, always ensure webAppUrl is populated
+      if (envInfo.url && !isValidAppsScriptUrl(savedUrl)) {
+        return {
+          ...DEFAULT_APPS_SCRIPT_CONFIG,
+          ...parsed,
+          webAppUrl: envInfo.url,
+          autoSync: parsed.autoSync ?? envAutoSync,
+          connectionStatus: 'connected',
+          isFromEnv: true,
+          envVarName: envInfo.varName,
+          lastMessage: `Terhubung otomatis dari Environment Variable Vercel (${envInfo.varName}).`,
+        };
+      }
+
+      return {
+        ...DEFAULT_APPS_SCRIPT_CONFIG,
+        ...parsed,
+        webAppUrl: isValidAppsScriptUrl(savedUrl) ? savedUrl : envInfo.url,
+        isFromEnv: Boolean(envInfo.url && (!isValidAppsScriptUrl(savedUrl) || savedUrl === envInfo.url)),
+        envVarName: envInfo.varName || 'VITE_APPS_SCRIPT_URL',
+      };
+    } catch {
+      // fallback to default
+    }
+  }
+
+  return DEFAULT_APPS_SCRIPT_CONFIG;
 }
 
 export async function testAppsScriptConnection(webAppUrl: string): Promise<{
@@ -89,7 +178,7 @@ export async function syncDatabaseToAppsScript(
     if (json && json.ok) {
       return {
         ok: true,
-        message: json.message || 'Seluruh 18 tabel berhasil disinkronkan ke Google Sheets.',
+        message: json.message || 'Database berhasil disinkronkan ke Google Sheets Apps Script.',
         timestamp: json.timestamp || new Date().toISOString(),
       };
     }
@@ -125,7 +214,7 @@ export async function pullDatabaseFromAppsScript(
     if (json && json.ok && json.data) {
       return {
         ok: true,
-        message: 'Data berhasil ditarik dari Google Sheets Apps Script.',
+        message: 'Data berhasil dimuat dari Google Sheets Apps Script.',
         data: json.data,
       };
     }
@@ -148,15 +237,17 @@ export const CODE_GS_SOURCE = `/**
  * SMARTBUILD ENTERPRISE - GOOGLE APPS SCRIPT BACKEND API (code.gs)
  * Construction Contract, BIM & Smart Contract Management System
  * ============================================================================
- * Petunjuk Deployment:
+ * Petunjuk Deployment & Integrasi Vercel Environment Variable:
  * 1. Buka Google Spreadsheet baru -> Extensions -> Apps Script.
  * 2. Buat 2 file script: \`code.gs\` (file ini) dan \`setup.gs\`.
  * 3. Jalankan fungsi \`setupSmartBuildDatabase()\` pada \`setup.gs\` satu kali.
  * 4. Klik Deploy -> New Deployment -> Select type: Web App.
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 5. Salin Web App URL (\`https://script.google.com/macros/s/.../exec\`)
- *    ke menu Pengaturan -> Integrasi Database Apps Script di aplikasi SmartBuild.
+ * 5. Salin Web App URL (\`https://script.google.com/macros/s/.../exec\`).
+ * 6. Masukkan di Vercel -> Project Settings -> Environment Variables:
+ *    - Name : VITE_APPS_SCRIPT_URL   (atau APPS_SCRIPT_URL)
+ *    - Value: https://script.google.com/macros/s/.../exec
  */
 
 var TABLES = [
@@ -328,7 +419,7 @@ export const SETUP_GS_SOURCE = `/**
  */
 
 var SMARTBUILD_SCHEMA = {
-  users: ['id', 'name', 'email', 'role', 'organizationId', 'organizationName', 'position', 'phone', 'status', 'createdAt', '_raw_json'],
+  users: ['id', 'name', 'loginId', 'password', 'email', 'role', 'organizationId', 'organizationName', 'position', 'phone', 'bankName', 'bankAccountNumber', 'bankAccountHolder', 'status', 'createdAt', '_raw_json'],
   organizations: ['id', 'name', 'type', 'npwp', 'address', 'phone', 'verified', '_raw_json'],
   projects: ['id', 'code', 'name', 'category', 'description', 'location', 'clientId', 'clientName', 'contractorId', 'contractorName', 'verifikatorId', 'verifikatorName', 'contractValue', 'startDate', 'targetEndDate', 'status', 'overallProgress', 'isDemo', '_raw_json'],
   project_members: ['id', 'projectId', 'userId', 'roleInProject', 'assignedAt', '_raw_json'],
