@@ -28,6 +28,7 @@ import {
   canPerformAction,
   formatDateID,
   formatRupiah,
+  generateUniqueId,
   validateMilestonesTotalPercentage,
 } from '../utils/calculations';
 
@@ -168,7 +169,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         documents: docTitle.trim()
           ? [
               {
-                id: `doc-${Date.now()}`,
+                id: generateUniqueId('doc'),
                 title: docTitle.trim(),
                 type: 'Dokumen Perencanaan',
                 uploadedAt: startDate,
@@ -179,7 +180,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         photos: photoCaption.trim()
           ? [
               {
-                id: `ph-${Date.now()}`,
+                id: generateUniqueId('ph'),
                 caption: photoCaption.trim(),
                 stage: 'Persiapan Proyek',
                 uploadedAt: startDate,
@@ -1005,7 +1006,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           revisionHistory: [
             ...editingContract.revisionHistory,
             {
-              id: `rev-${Date.now()}`,
+              id: generateUniqueId('rev'),
               date: new Date().toISOString().split('T')[0],
               actor: currentUser.name,
               summary: 'Pembaruan klausul kontrak dan jadwal tahapan sebelum persetujuan final.',
@@ -1013,7 +1014,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           ],
         }
       : {
-          id: `ctr-${Date.now()}`,
+          id: generateUniqueId('ctr'),
           contractNumber: `KTR/SB/2026/XI/${String(db.contracts.length + 1).padStart(3, '0')}`,
           projectId,
           projectName: targetProject?.name || 'Proyek Konstruksi',
@@ -1030,7 +1031,7 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           contractorApproved: false,
           revisionHistory: [
             {
-              id: `rev-${Date.now()}`,
+              id: generateUniqueId('rev'),
               date: contractDate,
               actor: currentUser.name,
               summary: 'Pembuatan draf kontrak digital baru beserta tahapan pembayaran.',

@@ -33,6 +33,7 @@ import {
   canPerformAction,
   formatDateID,
   formatRupiah,
+  generateUniqueId,
 } from '../utils/calculations';
 
 // Built-in SVG Data URLs for realistic Digital Evidence photo previews
@@ -151,7 +152,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
     );
     setUploadedAttachments([
       {
-        id: `att-sample-${Date.now()}`,
+        id: generateUniqueId('att-sample'),
         reportId: '',
         fileName: `Foto_Bukti_${(defaultMs?.name || 'Lapangan').replace(/\s+/g, '_')}_100Persen.jpg`,
         fileType: 'Foto Dokumentasi',
@@ -182,7 +183,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
         const isImage = file.type.startsWith('image/');
 
         const newAtt: ProgressAttachment = {
-          id: `att-upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          id: generateUniqueId('att-upload'),
           reportId: '',
           fileName: file.name,
           fileType: isImage ? 'Foto Dokumentasi' : 'Dokumen Teknis',

@@ -345,19 +345,40 @@ function readFullDatabaseFromSheets() {
     var values = sheet.getDataRange().getValues();
     var headers = values[0];
     var rows = [];
+    var seenIds = {};
     for (var r = 1; r < values.length; r++) {
       var jsonColIndex = headers.indexOf('_raw_json');
       if (jsonColIndex !== -1 && values[r][jsonColIndex]) {
         try {
-          rows.push(JSON.parse(values[r][jsonColIndex]));
+          var parsedItem = JSON.parse(values[r][jsonColIndex]);
+          if (parsedItem && parsedItem.id) {
+            if (!seenIds[parsedItem.id]) {
+              seenIds[parsedItem.id] = true;
+              rows.push(parsedItem);
+            }
+          } else if (parsedItem) {
+            rows.push(parsedItem);
+          }
           continue;
         } catch (parseErr) {}
       }
       var rowObj = {};
+      var hasValue = false;
       for (var c = 0; c < headers.length; c++) {
-        rowObj[headers[c]] = values[r][c];
+        var cellVal = values[r][c];
+        if (cellVal !== '' && cellVal !== null && cellVal !== undefined) {
+          hasValue = true;
+        }
+        rowObj[headers[c]] = cellVal;
       }
-      rows.push(rowObj);
+      if (!hasValue) continue;
+      if (!rowObj.id) {
+        rowObj.id = tableName + '-row-' + r;
+      }
+      if (!seenIds[rowObj.id]) {
+        seenIds[rowObj.id] = true;
+        rows.push(rowObj);
+      }
     }
     result[tableName] = (tableName === 'system_settings') ? (rows[0] || null) : rows;
   }

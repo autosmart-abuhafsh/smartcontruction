@@ -285,3 +285,176 @@ export function verifyOwnerSettingsPassword(input: string): boolean {
   return input.trim() === OWNER_SETTINGS_PASSWORD;
 }
 
+let _uniqueIdCounter = 0;
+
+export function generateUniqueId(prefix: string): string {
+  _uniqueIdCounter = (_uniqueIdCounter + 1) % 1000000;
+  const rand = Math.random().toString(36).slice(2, 6);
+  return `${prefix}-${Date.now()}-${_uniqueIdCounter.toString(36)}${rand}`;
+}
+
+export function generateNextTransactionId(
+  existingTransactions: Array<{ id?: string }>
+): string {
+  const existingIds = new Set(
+    (existingTransactions || []).map((t) => String(t?.id || '').trim())
+  );
+  let maxNum = (existingTransactions || []).length;
+  for (const id of existingIds) {
+    const match = id.match(/(\d+)$/);
+    if (match) {
+      const parsed = parseInt(match[1], 10);
+      if (!isNaN(parsed) && parsed > maxNum) {
+        maxNum = parsed;
+      }
+    }
+  }
+  let nextNum = maxNum + 1;
+  let candidate = `TRX-DEMO-2026-${String(nextNum).padStart(3, '0')}`;
+  while (existingIds.has(candidate)) {
+    nextNum += 1;
+    candidate = `TRX-DEMO-2026-${String(nextNum).padStart(3, '0')}`;
+  }
+  return candidate;
+}
+
+export function deduplicateById<T extends { id?: string }>(
+  items: T[] | undefined | null,
+  fallbackPrefix: string
+): T[] {
+  if (!Array.isArray(items)) return [];
+  const seenIds = new Set<string>();
+  const result: T[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (!item || typeof item !== 'object') continue;
+
+    // Ignore completely blank rows pulled from Google Sheets
+    const entries = Object.entries(item).filter(([k]) => k !== '_raw_json');
+    const hasNonEmptyField = entries.some(([, v]) => {
+      if (v === null || v === undefined) return false;
+      if (typeof v === 'string') return v.trim().length > 0;
+      return true;
+    });
+    if (!hasNonEmptyField) continue;
+
+    let rawId = typeof item.id === 'string' ? item.id.trim() : String(item.id ?? '').trim();
+    if (!rawId) {
+      rawId = `${fallbackPrefix}-${i + 1}-${generateUniqueId('row')}`;
+    }
+
+    // If an exact duplicate ID appears in the same table, skip duplicate row
+    if (seenIds.has(rawId)) {
+      continue;
+    }
+
+    seenIds.add(rawId);
+    result.push(rawId === item.id ? item : { ...item, id: rawId });
+  }
+
+  return result;
+}
+
+export function sanitizeSmartBuildDatabase(
+  raw: Partial<SmartBuildDatabase> | null | undefined,
+  fallback: SmartBuildDatabase
+): SmartBuildDatabase {
+  if (!raw || typeof raw !== 'object') {
+    return fallback;
+  }
+
+  const pickTable = <T extends { id?: string }>(
+    candidate: T[] | undefined,
+    defaultTable: T[],
+    prefix: string,
+    requireNonEmpty = false
+  ): T[] => {
+    if (!Array.isArray(candidate)) return deduplicateById(defaultTable, prefix);
+    const cleaned = deduplicateById(candidate, prefix);
+    if (requireNonEmpty && cleaned.length === 0) {
+      return deduplicateById(defaultTable, prefix);
+    }
+    return cleaned;
+  };
+
+  const projects = pickTable(raw.projects, fallback.projects, 'prj', true).map((p) => ({
+    ...p,
+    documents: deduplicateById(Array.isArray(p.documents) ? p.documents : [], 'doc'),
+    photos: deduplicateById(Array.isArray(p.photos) ? p.photos : [], 'ph'),
+  }));
+
+  const contracts = pickTable(raw.contracts, fallback.contracts, 'ctr').map((c) => ({
+    ...c,
+    revisionHistory: deduplicateById(
+      Array.isArray(c.revisionHistory) ? c.revisionHistory : [],
+      'rev'
+    ),
+  }));
+
+  const progressReports = pickTable(
+    raw.progress_reports,
+    fallback.progress_reports,
+    'rep'
+  ).map((r) => ({
+    ...r,
+    attachments: deduplicateById(Array.isArray(r.attachments) ? r.attachments : [], 'att'),
+  }));
+
+  const bimModels = pickTable(raw.bim_models, fallback.bim_models, 'bim').map((m) => ({
+    ...m,
+    elements: deduplicateById(Array.isArray(m.elements) ? m.elements : [], 'bim-el'),
+  }));
+
+  const smartContracts = pickTable(
+    raw.smart_contracts,
+    fallback.smart_contracts,
+    'sc'
+  ).map((sc) => ({
+    ...sc,
+    executionLogs: deduplicateById(
+      Array.isArray(sc.executionLogs) ? sc.executionLogs : [],
+      'scl'
+    ),
+  }));
+
+  return {
+    organizations: pickTable(raw.organizations, fallback.organizations, 'org', true),
+    users: pickTable(raw.users, fallback.users, 'usr', true),
+    projects,
+    project_members: pickTable(raw.project_members, fallback.project_members, 'pm'),
+    contracts,
+    contract_parties: pickTable(raw.contract_parties, fallback.contract_parties, 'cp'),
+    contract_milestones: pickTable(
+      raw.contract_milestones,
+      fallback.contract_milestones,
+      'ms',
+      true
+    ),
+    progress_reports: progressReports,
+    progress_attachments: pickTable(
+      raw.progress_attachments,
+      fallback.progress_attachments,
+      'att'
+    ),
+    verifications: pickTable(raw.verifications, fallback.verifications, 'ver'),
+    bim_models: bimModels,
+    smart_contracts: smartContracts,
+    payment_schedules: pickTable(
+      raw.payment_schedules,
+      fallback.payment_schedules,
+      'pay-sch',
+      true
+    ),
+    payments: pickTable(raw.payments, fallback.payments, 'pay'),
+    transactions: pickTable(raw.transactions, fallback.transactions, 'trx'),
+    notifications: pickTable(raw.notifications, fallback.notifications, 'notif'),
+    activity_logs: pickTable(raw.activity_logs, fallback.activity_logs, 'log'),
+    system_settings:
+      raw.system_settings && typeof raw.system_settings === 'object'
+        ? { ...fallback.system_settings, ...raw.system_settings }
+        : fallback.system_settings,
+  };
+}
+
+

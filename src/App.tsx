@@ -44,7 +44,10 @@ import {
   calculateWeightedProjectProgress,
   canAccessMenu,
   evaluateSmartContractPaymentTrigger,
+  generateNextTransactionId,
+  generateUniqueId,
   getRoleLabel,
+  sanitizeSmartBuildDatabase,
 } from './utils/calculations';
 import {
   AppsScriptConfig,
@@ -96,12 +99,15 @@ export default function App() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved) as SmartBuildDatabase;
+        return sanitizeSmartBuildDatabase(
+          JSON.parse(saved) as Partial<SmartBuildDatabase>,
+          INITIAL_DATABASE
+        );
       }
     } catch {
       // ignore storage errors
     }
-    return INITIAL_DATABASE;
+    return sanitizeSmartBuildDatabase(INITIAL_DATABASE, INITIAL_DATABASE);
   });
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -169,10 +175,15 @@ export default function App() {
         Array.isArray(pullRes.data.projects) &&
         pullRes.data.projects.length > 0
       ) {
-        setDb((prev) => ({
-          ...prev,
-          ...pullRes.data,
-        }));
+        setDb((prev) =>
+          sanitizeSmartBuildDatabase(
+            {
+              ...prev,
+              ...pullRes.data,
+            },
+            INITIAL_DATABASE
+          )
+        );
         setAppsScriptConfig((prev) => ({
           ...prev,
           connectionStatus: 'connected',
@@ -250,7 +261,7 @@ export default function App() {
     const actor = currentUser || prev.users[0];
     const nextLogs = [
       {
-        id: `log-${Date.now()}`,
+        id: generateUniqueId('log'),
         timestamp: nowStr,
         actorName: actor.name,
         actorRole: actor.role,
@@ -265,7 +276,7 @@ export default function App() {
       notifCategory && notifTitle
         ? [
             {
-              id: `notif-${Date.now()}`,
+              id: generateUniqueId('notif'),
               title: notifTitle,
               message: details,
               category: notifCategory,
@@ -286,7 +297,7 @@ export default function App() {
       const nextNum = prev.projects.length + 1;
       const project: Project = {
         ...newProj,
-        id: `prj-${Date.now()}`,
+        id: generateUniqueId('prj'),
         code: `PRJ-2026-${String(nextNum).padStart(3, '0')}`,
       };
       const { nextLogs, nextNotifs } = appendLogAndNotif(
@@ -433,7 +444,7 @@ export default function App() {
           revisionHistory: [
             ...c.revisionHistory,
             {
-              id: `rev-${Date.now()}`,
+              id: generateUniqueId('rev'),
               date: new Date().toISOString().split('T')[0],
               actor: currentUser?.name || partyRole,
               summary: `Persetujuan kontrak digital diberikan oleh ${
@@ -467,12 +478,16 @@ export default function App() {
 
   const handleSubmitProgressReport = (newReportData: Omit<ProgressReport, 'id'>) => {
     setDb((prev) => {
-      const reportId = `rep-${Date.now()}`;
-      const verId = `ver-${Date.now()}`;
+      const reportId = generateUniqueId('rep');
+      const verId = generateUniqueId('ver');
       const newReport: ProgressReport = {
         ...newReportData,
         id: reportId,
-        attachments: newReportData.attachments.map((a) => ({ ...a, reportId })),
+        attachments: newReportData.attachments.map((a) => ({
+          ...a,
+          id: a.id || generateUniqueId('att'),
+          reportId,
+        })),
       };
 
       const newVerification = {
@@ -655,7 +670,7 @@ export default function App() {
       const nextPayments = autoPaidSchedule
         ? [
             {
-              id: `pay-${Date.now()}`,
+              id: generateUniqueId('pay'),
               scheduleId: (autoPaidSchedule as typeof prev.payment_schedules[0]).id,
               projectId: targetVer.projectId,
               projectName: targetVer.projectName,
@@ -672,7 +687,7 @@ export default function App() {
       const nextTransactions = autoPaidSchedule
         ? [
             {
-              id: `TRX-DEMO-2026-${String(prev.transactions.length + 1).padStart(3, '0')}`,
+              id: generateNextTransactionId(prev.transactions),
               date: today,
               projectId: targetVer.projectId,
               projectName: targetVer.projectName,
@@ -696,7 +711,7 @@ export default function App() {
           lastTxHash: simHash,
           executionLogs: [
             {
-              id: `scl-${Date.now()}`,
+              id: generateUniqueId('scl'),
               timestamp: nowTime,
               event:
                 newStatus === 'Disetujui' && approvedPercentage >= 100
@@ -770,7 +785,7 @@ export default function App() {
       const targetProject = prev.projects.find((p) => p.id === targetSch.projectId);
 
       const newTransaction = {
-        id: `TRX-DEMO-2026-${String(prev.transactions.length + 1).padStart(3, '0')}`,
+        id: generateNextTransactionId(prev.transactions),
         date: today,
         projectId: targetSch.projectId,
         projectName: targetSch.projectName,
@@ -785,7 +800,7 @@ export default function App() {
       };
 
       const newPayment = {
-        id: `pay-${Date.now()}`,
+        id: generateUniqueId('pay'),
         scheduleId: targetSch.id,
         projectId: targetSch.projectId,
         projectName: targetSch.projectName,
@@ -803,7 +818,7 @@ export default function App() {
               lastTxHash: simTxHash,
               executionLogs: [
                 {
-                  id: `scl-${Date.now()}`,
+                  id: generateUniqueId('scl'),
                   timestamp: nowTime,
                   event: `AutoPayoutReleased(${targetSch.milestoneName}, Rp${targetSch.nominal.toLocaleString('id-ID')} -> Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM)`,
                   txHash: simTxHash,
@@ -865,32 +880,34 @@ export default function App() {
           onRegister={(newUser, newOrgName) => {
             const createdUser: User = {
               ...newUser,
-              id: `usr-${Date.now()}`,
+              id: generateUniqueId('usr'),
               status: 'Aktif',
               createdAt: new Date().toISOString().split('T')[0],
             };
             setDb((prev) => ({
               ...prev,
               users: [...prev.users, createdUser],
-              organizations: newOrgName
-                ? [
-                    ...prev.organizations,
-                    {
-                      id: createdUser.organizationId,
-                      name: newOrgName,
-                      type:
-                        createdUser.role === 'client'
-                          ? 'Owner / Client'
-                          : createdUser.role === 'contractor'
-                          ? 'Kontraktor Utama'
-                          : 'Konsultan Pengawas',
-                      npwp: '09.876.543.2-100.000',
-                      address: 'Indonesia',
-                      phone: createdUser.phone,
-                      verified: true,
-                    },
-                  ]
-                : prev.organizations,
+              organizations:
+                newOrgName &&
+                !prev.organizations.some((o) => o.id === createdUser.organizationId)
+                  ? [
+                      ...prev.organizations,
+                      {
+                        id: createdUser.organizationId,
+                        name: newOrgName,
+                        type:
+                          createdUser.role === 'client'
+                            ? 'Owner / Client'
+                            : createdUser.role === 'contractor'
+                            ? 'Kontraktor Utama'
+                            : 'Konsultan Pengawas',
+                        npwp: '09.876.543.2-100.000',
+                        address: 'Indonesia',
+                        phone: createdUser.phone,
+                        verified: true,
+                      },
+                    ]
+                  : prev.organizations,
             }));
             triggerLoadingAnimation(
               `Mendaftarkan Akun ${createdUser.name}...`,
@@ -1292,7 +1309,7 @@ export default function App() {
               onResetStage3Simulation={() => {
                 setDb((prev) => {
                   const updatedMilestones = prev.contract_milestones.map((m) =>
-                    m.id === 'ms-103'
+                    m.id === 'ms-003' || (m.projectId === 'prj-001' && m.order === 3)
                       ? { ...m, realizedProgress: 20, status: 'Dalam Proses' as const }
                       : m
                   );
@@ -1305,7 +1322,7 @@ export default function App() {
                       p.id === 'prj-001' ? { ...p, overallProgress: newOverall } : p
                     ),
                     payment_schedules: prev.payment_schedules.map((s) =>
-                      s.milestoneId === 'ms-103'
+                      s.milestoneId === 'ms-003'
                         ? {
                             ...s,
                             status: 'Menunggu verifikasi' as const,
@@ -1381,7 +1398,7 @@ export default function App() {
                     ...prev.users,
                     {
                       ...newUser,
-                      id: `usr-${Date.now()}`,
+                      id: generateUniqueId('usr'),
                       createdAt: new Date().toISOString().split('T')[0],
                     },
                   ],
@@ -1442,10 +1459,15 @@ export default function App() {
               onSetOwnerUnlocked={setIsOwnerSettingsUnlocked}
               onUpdateAppsScriptConfig={(nextCfg) => setAppsScriptConfig(nextCfg)}
               onReplaceDatabaseFromCloud={(cloudData) => {
-                setDb((prev) => ({
-                  ...prev,
-                  ...cloudData,
-                }));
+                setDb((prev) =>
+                  sanitizeSmartBuildDatabase(
+                    {
+                      ...prev,
+                      ...cloudData,
+                    },
+                    INITIAL_DATABASE
+                  )
+                );
               }}
               onUpdateProfile={(updatedUser) => {
                 setCurrentUser(updatedUser);

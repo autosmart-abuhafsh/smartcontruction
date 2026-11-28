@@ -7,8 +7,12 @@ import {
   canDeleteProject,
   canPerformAction,
   computeDashboardStats,
+  deduplicateById,
   evaluateSmartContractPaymentTrigger,
   formatRupiah,
+  generateNextTransactionId,
+  generateUniqueId,
+  sanitizeSmartBuildDatabase,
   validateMilestonesTotalPercentage,
   verifyOwnerSettingsPassword,
 } from './calculations';
@@ -17,12 +21,54 @@ import {
   isValidAppsScriptUrl,
   resolveInitialAppsScriptConfig,
 } from '../services/appsScriptService';
+import { INITIAL_DATABASE } from '../data/seedData';
 
 test('verifyOwnerSettingsPassword validates website owner password 2026', () => {
   assert.equal(verifyOwnerSettingsPassword('2026'), true);
   assert.equal(verifyOwnerSettingsPassword(' 2026 '), true);
   assert.equal(verifyOwnerSettingsPassword('2025'), false);
   assert.equal(verifyOwnerSettingsPassword(''), false);
+});
+
+test('generateUniqueId and generateNextTransactionId never produce duplicate React keys', () => {
+  const seen = new Set<string>();
+  for (let i = 0; i < 100; i++) {
+    const id = generateUniqueId('item');
+    assert.equal(seen.has(id), false, `Duplicate ID generated: ${id}`);
+    seen.add(id);
+  }
+
+  const nextTrx = generateNextTransactionId([
+    { id: 'TRX-DEMO-2026-001' },
+    { id: 'TRX-DEMO-2026-003' },
+  ]);
+  assert.equal(nextTrx, 'TRX-DEMO-2026-004');
+});
+
+test('deduplicateById and sanitizeSmartBuildDatabase remove empty rows and duplicate keys', () => {
+  const dirtyList = [
+    { id: 'usr-1', name: 'A' },
+    { id: 'usr-1', name: 'A-updated' },
+    { id: '', name: '' },
+    { id: '', name: 'No ID User' },
+  ];
+  const cleanList = deduplicateById(dirtyList, 'usr');
+  assert.equal(cleanList.length, 2);
+  assert.equal(cleanList[0].id, 'usr-1');
+  assert.equal(cleanList[0].name, 'A');
+  assert.equal(cleanList[1].name, 'No ID User');
+  assert.ok(cleanList[1].id.startsWith('usr-'));
+
+  const dirtyDb = {
+    ...INITIAL_DATABASE,
+    transactions: [
+      ...INITIAL_DATABASE.transactions,
+      { ...INITIAL_DATABASE.transactions[0] }, // duplicate TRX-DEMO-2026-001
+    ],
+  };
+  const sanitized = sanitizeSmartBuildDatabase(dirtyDb, INITIAL_DATABASE);
+  const trxIds = sanitized.transactions.map((t) => t.id);
+  assert.equal(new Set(trxIds).size, trxIds.length);
 });
 
 test('isValidAppsScriptUrl and resolveInitialAppsScriptConfig validate Google Apps Script Web App URLs', () => {

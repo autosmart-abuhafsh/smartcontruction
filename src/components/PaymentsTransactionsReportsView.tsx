@@ -41,6 +41,7 @@ import {
   canPerformAction,
   formatDateID,
   formatRupiah,
+  generateUniqueId,
   getRoleLabel,
   verifyOwnerSettingsPassword,
 } from '../utils/calculations';
@@ -1124,7 +1125,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       password: password.trim() || 'smartbuild2026',
       email: email.trim(),
       role,
-      organizationId: `org-${Date.now()}`,
+      organizationId: generateUniqueId('org'),
       organizationName: orgName.trim() || 'SmartBuild Partner',
       position: position.trim() || 'Anggota Tim',
       phone: phone.trim() || '0812-0000-0000',

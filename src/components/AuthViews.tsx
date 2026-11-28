@@ -13,7 +13,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { Organization, User, UserRole } from '../types/smartbuild';
-import { getRoleLabel } from '../utils/calculations';
+import { generateUniqueId, getRoleLabel } from '../utils/calculations';
 import { SmartBuildLogo } from './SmartBuildBrand';
 
 interface AuthViewsProps {
@@ -98,7 +98,7 @@ export const AuthViews: React.FC<AuthViewsProps> = ({
         name: regName.trim(),
         email: regEmail.trim(),
         role: regRole,
-        organizationId: matchedOrg ? matchedOrg.id : `org-${Date.now()}`,
+        organizationId: matchedOrg ? matchedOrg.id : generateUniqueId('org'),
         organizationName: regOrgName.trim(),
         position: regPosition.trim() || getRoleLabel(regRole),
         phone: regPhone.trim() || '0812-0000-0000',
