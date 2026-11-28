@@ -13,7 +13,10 @@ import {
   verifyOwnerSettingsPassword,
 } from './calculations';
 import { ContractMilestone, PaymentSchedule, Project } from '../types/smartbuild';
-import { isValidAppsScriptUrl } from '../services/appsScriptService';
+import {
+  isValidAppsScriptUrl,
+  resolveInitialAppsScriptConfig,
+} from '../services/appsScriptService';
 
 test('verifyOwnerSettingsPassword validates website owner password 2026', () => {
   assert.equal(verifyOwnerSettingsPassword('2026'), true);
@@ -22,13 +25,21 @@ test('verifyOwnerSettingsPassword validates website owner password 2026', () => 
   assert.equal(verifyOwnerSettingsPassword(''), false);
 });
 
-test('isValidAppsScriptUrl validates Google Apps Script Web App deployment URLs', () => {
+test('isValidAppsScriptUrl and resolveInitialAppsScriptConfig validate Google Apps Script Web App URLs', () => {
+  const validUrl = 'https://script.google.com/macros/s/AKfycbz1234567890abcdef/exec';
+  assert.equal(isValidAppsScriptUrl(validUrl), true);
   assert.equal(
-    isValidAppsScriptUrl('https://script.google.com/macros/s/AKfycbz1234567890abcdef/exec'),
-    true
+    isValidAppsScriptUrl('https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec'),
+    false
   );
   assert.equal(isValidAppsScriptUrl('https://example.com/api'), false);
   assert.equal(isValidAppsScriptUrl(''), false);
+
+  const resolved = resolveInitialAppsScriptConfig(
+    JSON.stringify({ webAppUrl: validUrl, autoSync: true })
+  );
+  assert.equal(resolved.webAppUrl, validUrl);
+  assert.equal(resolved.autoSync, true);
 });
 
 test('formatRupiah formats Indonesian currency accurately', () => {
