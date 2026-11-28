@@ -180,11 +180,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => onNavigate('users')}
+            onClick={() => onNavigate('policy')}
             className="px-3.5 py-2 text-xs font-semibold border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/50 text-[#1264F4] dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>Manajemen Akun &amp; ID</span>
+            <FileSignature className="w-3.5 h-3.5" />
+            <span>Kebijakan Kontrak</span>
           </button>
           <button
             type="button"

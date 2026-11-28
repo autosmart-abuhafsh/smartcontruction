@@ -14,6 +14,7 @@ import {
   MapPin,
   Calendar,
   AlertTriangle,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   Contract,
@@ -1612,3 +1613,323 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
     </div>
   );
 };
+
+/* ============================================================================
+ * MODUL KEBIJAKAN KONTRAK: CONTRACT POLICY & DYNAMIC RULE ENGINE (VERSI 1)
+ * ========================================================================== */
+
+interface PolicyRulesState {
+  updatedAt: string;
+  requirePhoto: boolean;
+  requireLabPdf: boolean;
+  requireVideo: boolean;
+  requireAdminVerify: boolean;
+  requireSupervisorApproval: boolean;
+  requireOwnerFinalApproval: boolean;
+  requireMfaOtp: boolean;
+  autoLockOnDispute: boolean;
+}
+
+const POLICY_STORAGE_KEY = 'smartbuild_contract_policy_rules_v1';
+
+const DEFAULT_POLICY_RULES: PolicyRulesState = {
+  updatedAt: '2026-08-01 09:00 WIB',
+  requirePhoto: true,
+  requireLabPdf: true,
+  requireVideo: false,
+  requireAdminVerify: true,
+  requireSupervisorApproval: true,
+  requireOwnerFinalApproval: true,
+  requireMfaOtp: true,
+  autoLockOnDispute: true,
+};
+
+export const ContractPolicyView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
+  const projectOptions = [
+    ...db.projects.map((p) => ({ id: p.id, name: p.name })),
+    ...(db.projects.some((p) => p.name.toLowerCase().includes('gedung aula'))
+      ? []
+      : [{ id: 'prj-aula', name: 'Pembangunan Gedung Aula' }]),
+  ];
+
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(
+    projectOptions[0]?.id || 'prj-001'
+  );
+  const [rulesByProject, setRulesByProject] = useState<Record<string, PolicyRulesState>>(() => {
+    try {
+      const saved = localStorage.getItem(POLICY_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved) as Record<string, PolicyRulesState>;
+      }
+    } catch {
+      // ignore storage error
+    }
+    return {};
+  });
+
+  const currentRules: PolicyRulesState =
+    rulesByProject[selectedProjectId] || DEFAULT_POLICY_RULES;
+
+  const handleToggleRule = (field: keyof Omit<PolicyRulesState, 'updatedAt'>) => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const formattedTimestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+      now.getDate()
+    )} ${pad(now.getHours())}:${pad(now.getMinutes())} WIB`;
+
+    const updatedForProject: PolicyRulesState = {
+      ...currentRules,
+      [field]: !currentRules[field],
+      updatedAt: formattedTimestamp,
+    };
+
+    const nextMap = {
+      ...rulesByProject,
+      [selectedProjectId]: updatedForProject,
+    };
+    setRulesByProject(nextMap);
+    try {
+      localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(nextMap));
+    } catch {
+      // ignore storage error
+    }
+  };
+
+  const ruleChecklistItems: {
+    key: keyof Omit<PolicyRulesState, 'updatedAt'>;
+    label: string;
+  }[] = [
+    {
+      key: 'requirePhoto',
+      label: 'Wajib Bukti Foto Dokumentasi Lapangan (JPG/PNG)',
+    },
+    {
+      key: 'requireLabPdf',
+      label: 'Wajib Dokumen Pendukung / Hasil Uji Lab (PDF)',
+    },
+    {
+      key: 'requireVideo',
+      label: 'Wajib Bukti Video Pelaksanaan (MP4)',
+    },
+    {
+      key: 'requireAdminVerify',
+      label: 'Wajib Verifikasi Kelengkapan Dokumen oleh Verifikator Administrasi',
+    },
+    {
+      key: 'requireSupervisorApproval',
+      label: 'Wajib Pemeriksaan & Persetujuan Teknis Project Supervisor',
+    },
+    {
+      key: 'requireOwnerFinalApproval',
+      label: 'Wajib Persetujuan Akhir Pemilik Proyek sebelum Pencairan',
+    },
+    {
+      key: 'requireMfaOtp',
+      label: 'Wajib Otorisasi Multi-Factor Authentication (MFA OTP) saat Pencairan',
+    },
+    {
+      key: 'autoLockOnDispute',
+      label: 'Otomatis Kunci Dana Escrow apabila Terdapat Sengketa Aktif',
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header Card: Contract Policy & Dynamic Rule Engine (Versi 1) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="flex items-start gap-3.5">
+          <div className="pt-0.5 text-slate-900 dark:text-white shrink-0">
+            <SlidersHorizontal className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">
+              Contract Policy &amp; Dynamic Rule Engine (Versi 1)
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              Konfigurasi aturan kepatuhan otomatis, kewajiban bukti, otoritas pengawas, dan
+              parameter waktu Smart Contract H0–H200 untuk setiap kontrak.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <select
+            aria-label="Pilih kontrak proyek untuk kebijakan"
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white min-w-[230px] focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
+          >
+            {projectOptions.map((proj) => (
+              <option key={proj.id} value={proj.id}>
+                {proj.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 3-Column Policy Cards: 6.1, 6.2, 6.3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* 6.1 Kebijakan Pemilik Proyek / Pengguna Jasa */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4 leading-snug">
+            6.1 Kebijakan Pemilik Proyek / Pengguna Jasa
+          </h2>
+          <ul className="space-y-3 text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed list-disc pl-4 marker:text-slate-500">
+            <li>Menyediakan dana Escrow pada H0 sesuai kesepakatan nilai kontrak.</li>
+            <li>Menyediakan dokumen perizinan dan gambar acuan proyek.</li>
+            <li>Memeriksa hasil pekerjaan yang telah diverifikasi pengawas.</li>
+            <li>
+              Memberikan keputusan persetujuan atau keberatan sesuai batas waktu H180–H185.
+            </li>
+            <li>
+              Menyetujui pencairan bertahap sesuai ketentuan kontrak yang terpenuhi.
+            </li>
+          </ul>
+        </div>
+
+        {/* 6.2 Kebijakan Penyedia Jasa / Kontraktor */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4 leading-snug">
+            6.2 Kebijakan Penyedia Jasa / Kontraktor
+          </h2>
+          <ul className="space-y-3 text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed list-disc pl-4 marker:text-slate-500">
+            <li>
+              Mengerjakan konstruksi sesuai spesifikasi teknis, gambar BIM, dan standar SNI.
+            </li>
+            <li>Menyelesaikan setiap tahapan pekerjaan sesuai jadwal H0–H180.</li>
+            <li>Mengirim laporan progres berkala secara akurat.</li>
+            <li>
+              Mengunggah bukti pekerjaan digital (foto berkoordinat, video, dan dokumen uji mutu
+              PDF).
+            </li>
+            <li>
+              Memperbaiki pekerjaan yang ditolak pengawas atau terbukti tidak sesuai pada H190–H195.
+            </li>
+          </ul>
+        </div>
+
+        {/* 6.3 Kebijakan Pengawas Pihak Ketiga (Supervisor) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4 leading-snug">
+            6.3 Kebijakan Pengawas Pihak Ketiga (Supervisor)
+          </h2>
+          <ul className="space-y-3 text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed list-disc pl-4 marker:text-slate-500">
+            <li>
+              Memeriksa bukti pekerjaan secara objektif dan independen di lapangan maupun digital.
+            </li>
+            <li>
+              Melakukan pemeriksaan teknis sesuai kewenangan dan kompetensi profesi.
+            </li>
+            <li>
+              Memberikan catatan teknis, rekomendasi, dan laporan hasil pemeriksaan.
+            </li>
+            <li>
+              Menjaga independensi pemeriksaan tanpa mengubah nominal kontrak atau mencairkan dana.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Section 6.4 & 6.5 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* 6.4 Pengaturan Aturan Kontrak & Syarat Penguncian Dana */}
+        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800 mb-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug max-w-md">
+              6.4 Pengaturan Aturan Kontrak &amp; Syarat Penguncian Dana
+            </h2>
+            <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 sm:text-right leading-relaxed shrink-0">
+              <div>Diperbarui: {currentRules.updatedAt.split(' ')[0]}</div>
+              <div>{currentRules.updatedAt.split(' ').slice(1).join(' ')}</div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {ruleChecklistItems.map((item) => {
+              const checked = currentRules[item.key];
+              return (
+                <label
+                  key={item.key}
+                  className="flex items-center justify-between gap-4 py-3.5 cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 px-1 rounded-lg transition-colors"
+                >
+                  <span className="text-xs sm:text-[13px] text-slate-700 dark:text-slate-200 leading-relaxed">
+                    {item.label}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => handleToggleRule(item.key)}
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-slate-300 dark:border-slate-600 accent-[#0F172A] dark:accent-blue-600 cursor-pointer shrink-0"
+                  />
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 6.5 Parameter Waktu Smart Contract H0-H200 */}
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-4">
+          <div className="space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white pb-3.5 border-b border-slate-100 dark:border-slate-800 leading-snug">
+              6.5 Parameter Waktu Smart Contract (H0–H200)
+            </h2>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700">
+                <div className="flex items-center justify-between font-bold text-[#071D49] dark:text-blue-300">
+                  <span>Fase H0 · Aktivasi &amp; Penguncian Dana Escrow</span>
+                  <span className="font-mono text-[11px]">Hari ke-0</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Pemilik proyek menyetorkan nilai kontrak ke rekening Escrow Smart Contract dan
+                  mengunggah dokumen perizinan acuan.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700">
+                <div className="flex items-center justify-between font-bold text-[#071D49] dark:text-blue-300">
+                  <span>Fase H0–H180 · Pelaksanaan &amp; Bukti Digital</span>
+                  <span className="font-mono text-[11px]">180 Hari</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Kontraktor menyelesaikan tahapan konstruksi sesuai gambar BIM &amp; SNI serta
+                  mengunggah bukti foto, video, dan dokumen PDF.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700">
+                <div className="flex items-center justify-between font-bold text-[#071D49] dark:text-blue-300">
+                  <span>Fase H180–H185 · Keputusan &amp; Verifikasi</span>
+                  <span className="font-mono text-[11px]">5 Hari Kerja</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Batas waktu pemeriksaan pengawas independen dan keputusan persetujuan atau
+                  keberatan dari pemilik proyek.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700">
+                <div className="flex items-center justify-between font-bold text-[#071D49] dark:text-blue-300">
+                  <span>Fase H190–H195 · Masa Perbaikan &amp; Pencairan</span>
+                  <span className="font-mono text-[11px]">H190–H200</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Penyelesaian revisi pekerjaan yang ditolak sebelum pencairan otomatis ke rekening
+                  Penyedia Jasa (Bank Mandiri 1480025086508 a.n. MUHAJIRIN KASIM).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200">
+            <strong>Status Kepatuhan Rule Engine:</strong>{' '}
+            {Object.values(currentRules).filter((v) => v === true).length} dari 8 syarat penguncian
+            dana aktif diberlakukan pada kontrak terpilih.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+

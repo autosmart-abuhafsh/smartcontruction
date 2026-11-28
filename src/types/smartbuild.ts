@@ -38,6 +38,7 @@ export type MenuId =
   | 'dashboard'
   | 'projects'
   | 'contracts'
+  | 'policy'
   | 'progress'
   | 'bim'
   | 'verification'
