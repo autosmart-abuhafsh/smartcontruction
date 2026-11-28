@@ -1071,6 +1071,8 @@ export const ReportsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
 interface UsersManagementViewProps {
   db: SmartBuildDatabase;
   currentUser: User;
+  isOwnerUnlocked: boolean;
+  onSetOwnerUnlocked: (unlocked: boolean) => void;
   onAddUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
   onUpdateUser: (user: User, loginAfterSave?: boolean) => void;
   onDeleteUser: (userId: string) => void;
@@ -1081,12 +1083,18 @@ interface UsersManagementViewProps {
 export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   db,
   currentUser,
+  isOwnerUnlocked,
+  onSetOwnerUnlocked,
   onAddUser,
   onUpdateUser,
   onDeleteUser,
   onLoginAsUser,
   onToggleUserStatus,
 }) => {
+  const [ownerPasswordInput, setOwnerPasswordInput] = useState('');
+  const [showOwnerPassword, setShowOwnerPassword] = useState(false);
+  const [ownerPasswordError, setOwnerPasswordError] = useState<string | null>(null);
+
   const [name, setName] = useState('');
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('smartbuild2026');
@@ -1104,6 +1112,99 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const handleUnlockOwnerUsers = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verifyOwnerSettingsPassword(ownerPasswordInput)) {
+      setOwnerPasswordError(null);
+      setOwnerPasswordInput('');
+      onSetOwnerUnlocked(true);
+    } else {
+      setOwnerPasswordError(
+        'Password salah! Halaman Pengguna hanya dapat diakses oleh Pemilik Website Aplikasi.'
+      );
+    }
+  };
+
+  if (!isOwnerUnlocked) {
+    return (
+      <div className="max-w-md mx-auto my-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-5 text-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#071D49] dark:bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
+                Akses Terproteksi
+              </span>
+              <h1 className="text-base sm:text-lg font-bold text-[#071D49] dark:text-white mt-0.5">
+                Verifikasi Pemilik Website Aplikasi
+              </h1>
+            </div>
+          </div>
+
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Menu <strong>Pengguna &amp; Manajemen Admin</strong> dikunci menggunakan password khusus
+            pemilik website aplikasi untuk menjaga keamanan kredensial ID Login dan Password akun.
+          </p>
+
+          {ownerPasswordError && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 font-medium">
+              {ownerPasswordError}
+            </div>
+          )}
+
+          <form onSubmit={handleUnlockOwnerUsers} className="space-y-4">
+            <div>
+              <label
+                htmlFor="owner-users-password"
+                className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
+              >
+                Password Pemilik Website Aplikasi
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+                <input
+                  id="owner-users-password"
+                  type={showOwnerPassword ? 'text' : 'password'}
+                  value={ownerPasswordInput}
+                  onChange={(e) => {
+                    setOwnerPasswordInput(e.target.value);
+                    if (ownerPasswordError) setOwnerPasswordError(null);
+                  }}
+                  placeholder="Masukkan password pemilik..."
+                  className="w-full pl-10 pr-10 py-2.5 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
+                  autoFocus
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOwnerPassword((v) => !v)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Tampilkan atau sembunyikan password"
+                >
+                  {showOwnerPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#1264F4] hover:bg-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
+            >
+              <Unlock className="w-4 h-4" />
+              <span>Buka Pengaturan Pemilik</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const toggleRevealPassword = (userId: string) => {
     setRevealedPasswords((prev) => ({ ...prev, [userId]: !prev[userId] }));
@@ -1158,9 +1259,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-[#1264F4] dark:text-blue-400 text-[11px] font-bold mb-1">
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>Otoritas Super Admin: Kelola ID Login &amp; Password Semua Akun</span>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
+              <Unlock className="w-3.5 h-3.5" />
+              <span>Akses Pemilik Website Aplikasi Terbuka</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-[#1264F4] dark:text-blue-400 text-[11px] font-bold">
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Otoritas Super Admin: Kelola ID Login &amp; Password Semua Akun</span>
+            </div>
           </div>
           <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
             Manajemen Admin, Pengguna, ID Login &amp; Password (RBAC)
@@ -1170,14 +1277,24 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
             mengedit rekening bank, menghapus akun, atau masuk langsung sebagai pengguna tertentu.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAdd(!showAdd)}
-          className="px-4 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Admin / Pengguna</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => onSetOwnerUnlocked(false)}
+            className="px-3.5 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>Kunci Pengaturan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAdd(!showAdd)}
+            className="px-4 py-2 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Admin / Pengguna</span>
+          </button>
+        </div>
       </div>
 
       {feedbackMsg && (

@@ -133,6 +133,7 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState<MenuId>('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [isOwnerUsersUnlocked, setIsOwnerUsersUnlocked] = useState(false);
   const [isOwnerSettingsUnlocked, setIsOwnerSettingsUnlocked] = useState(false);
   const [loadingOverlay, setLoadingOverlay] = useState<{
     visible: boolean;
@@ -992,7 +993,8 @@ export default function App() {
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{item.label}</span>
-                {item.id === 'settings' && !isOwnerSettingsUnlocked && (
+                {((item.id === 'users' && !isOwnerUsersUnlocked) ||
+                  (item.id === 'settings' && !isOwnerSettingsUnlocked)) && (
                   <Lock className="w-3.5 h-3.5 ml-auto text-amber-400 shrink-0" />
                 )}
               </button>
@@ -1120,6 +1122,10 @@ export default function App() {
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span>{item.label}</span>
+                    {((item.id === 'users' && !isOwnerUsersUnlocked) ||
+                      (item.id === 'settings' && !isOwnerSettingsUnlocked)) && (
+                      <Lock className="w-3.5 h-3.5 ml-auto text-amber-400 shrink-0" />
+                    )}
                   </button>
                 );
               })}
@@ -1391,6 +1397,8 @@ export default function App() {
             <UsersManagementView
               db={db}
               currentUser={currentUser}
+              isOwnerUnlocked={isOwnerUsersUnlocked}
+              onSetOwnerUnlocked={setIsOwnerUsersUnlocked}
               onAddUser={(newUser) => {
                 setDb((prev) => ({
                   ...prev,
