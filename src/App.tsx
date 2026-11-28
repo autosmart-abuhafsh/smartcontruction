@@ -19,7 +19,6 @@ import {
   RotateCcw,
   Moon,
   Sun,
-  Sparkles,
   Cloud,
   Lock,
   SlidersHorizontal,
@@ -160,10 +159,23 @@ export default function App() {
     visible: boolean;
     message?: string;
     subMessage?: string;
-  }>({ visible: false });
+    durationMs?: number;
+  }>({
+    visible: true,
+    message: 'Membuka Aplikasi SmartBuild BIM & Smart Contract...',
+    subMessage: 'Menginisialisasi Model BIM 3D, Kontrak Digital, Escrow Smart Contract & Keamanan MFA',
+    durationMs: 6000,
+  });
 
-  const triggerLoadingAnimation = (message?: string, subMessage?: string, durationMs = 650) => {
-    setLoadingOverlay({ visible: true, message, subMessage });
+  useEffect(() => {
+    const bootTimer = window.setTimeout(() => {
+      setLoadingOverlay((prev) => ({ ...prev, visible: false }));
+    }, 6000);
+    return () => window.clearTimeout(bootTimer);
+  }, []);
+
+  const triggerLoadingAnimation = (message?: string, subMessage?: string, durationMs = 6000) => {
+    setLoadingOverlay({ visible: true, message, subMessage, durationMs });
     window.setTimeout(() => {
       setLoadingOverlay({ visible: false });
     }, durationMs);
@@ -895,6 +907,7 @@ export default function App() {
           <SmartBuildLoadingOverlay
             title={loadingOverlay.message}
             subtitle={loadingOverlay.subMessage}
+            durationMs={loadingOverlay.durationMs}
           />
         )}
         <AuthViews
@@ -905,8 +918,8 @@ export default function App() {
           onLogin={(user) => {
             triggerLoadingAnimation(
               `Menyiapkan Ruang Kerja ${user.name}...`,
-              'Menyinkronkan Model BIM 3D & Ledger Smart Contract',
-              650
+              'Menyinkronkan Model BIM 3D, Ledger Smart Contract & Keamanan MFA + PIN',
+              6000
             );
             setCurrentUser(user);
             setActiveMenu('dashboard');
@@ -974,6 +987,7 @@ export default function App() {
         <SmartBuildLoadingOverlay
           title={loadingOverlay.message}
           subtitle={loadingOverlay.subMessage}
+          durationMs={loadingOverlay.durationMs}
         />
       )}
 
@@ -1036,20 +1050,6 @@ export default function App() {
         </nav>
 
         <div className="p-3 border-t border-white/10 space-y-2">
-          <button
-            type="button"
-            onClick={() =>
-              triggerLoadingAnimation(
-                'Menyinkronkan Mesin BIM 3D & Smart Contract...',
-                'Memeriksa sinkronisasi data kontrak, progres lapangan & BIM 3D',
-                950
-              )
-            }
-            className="w-full px-3 py-2 rounded-lg border border-blue-400/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 text-xs font-medium flex items-center justify-center gap-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Efek Animasi Loading</span>
-          </button>
           <button
             type="button"
             onClick={() => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
 export const SmartBuildLogo: React.FC<{ className?: string }> = ({ className = 'w-9 h-9' }) => (
@@ -41,13 +41,35 @@ export const SmartBuildLogo: React.FC<{ className?: string }> = ({ className = '
   </svg>
 );
 
+const BOOT_STAGES = [
+  'Menginisialisasi Mesin SmartBuild BIM 3D & Smart Contract Escrow...',
+  'Menyinkronkan Kontrak Digital, Tahapan Proyek & Dokumen Verifikasi...',
+  'Memverifikasi Rantai Hash SHA-256 Audit Log & Keamanan MFA + PIN...',
+];
+
 export const SmartBuildLoadingOverlay: React.FC<{
   title?: string;
   subtitle?: string;
+  durationMs?: number;
 }> = ({
-  title = 'Menyiapkan Ruang Kerja SmartBuild...',
-  subtitle = 'Memuat Model BIM 3D, Kontrak Digital & Mesin Simulasi Smart Contract',
+  title = 'Menyiapkan Aplikasi SmartBuild Smart Contract...',
+  subtitle = 'Memuat Model BIM 3D, Kontrak Digital & Mesin Simulasi Smart Contract Escrow',
+  durationMs = 6000,
 }) => {
+  const [progress, setProgress] = useState(8);
+
+  useEffect(() => {
+    const start = Date.now();
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, Math.round((elapsed / durationMs) * 100));
+      setProgress(Math.max(8, pct));
+    }, 120);
+    return () => window.clearInterval(timer);
+  }, [durationMs]);
+
+  const stageIndex = progress < 38 ? 0 : progress < 74 ? 1 : 2;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -113,18 +135,22 @@ export const SmartBuildLoadingOverlay: React.FC<{
         </div>
 
         <div className="space-y-1.5">
-          <div className="text-lg font-bold tracking-tight text-white">{title}</div>
-          <p className="text-xs text-slate-300">{subtitle}</p>
+          <div className="text-base sm:text-lg font-bold tracking-tight text-white">{title}</div>
+          <p className="text-xs text-slate-300 leading-relaxed">{subtitle}</p>
         </div>
 
         {/* Animated progress track */}
-        <div className="w-64 h-1.5 bg-white/15 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-[#1264F4] via-[#60A5FA] to-[#10B981] rounded-full"
-            initial={{ x: '-100%' }}
-            animate={{ x: '100%' }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
-          />
+        <div className="w-full max-w-xs space-y-2">
+          <div className="w-full h-2 bg-white/15 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#1264F4] via-[#60A5FA] to-[#10B981] rounded-full transition-all duration-150"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[11px] font-mono text-blue-200">
+            <span className="truncate pr-2">{BOOT_STAGES[stageIndex]}</span>
+            <span className="font-bold text-emerald-400 shrink-0">{progress}%</span>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -628,14 +628,14 @@ const INITIAL_DISPUTE_RECORDS: ConstructionDisputeRecord[] = [
       'Keberatan atas kerapian sambungan grouting perkuatan balok lantai 3 pada area koridor timur (Simulasi Riwayat Sengketa H185–H195 DEMO).',
     statusLabel: 'Selesai (Menahan Pencairan)',
     isResolved: true,
-    submittedBy: 'Drs. Bambang Sutrisno',
+    submittedBy: 'Citra Ayu Deswina Maharani',
     submittedRole: 'PROJECT_OWNER',
     submittedAt: '2026-09-24 10:15 WIB',
     evidenceFileName: 'temuan_grouting_balok_lt3.jpg',
     responses: [
       {
         id: 'resp-1',
-        actorName: 'Ir. Raka Pratama (PT Bangun Karya Mandiri)',
+        actorName: 'Muhajirin Kasim (Muhajirin Kasim Konstruksi)',
         actorOrgAndRole: 'CONTRACTOR',
         timestamp: '2026-09-25 14:00 WIB',
         message:
@@ -643,7 +643,7 @@ const INITIAL_DISPUTE_RECORDS: ConstructionDisputeRecord[] = [
       },
       {
         id: 'resp-2',
-        actorName: 'Ir. Dian Kusuma, IPU (Konsultan Pengawas)',
+        actorName: 'Ir. Dian Permatasari, MT (Konsultan Pengawas)',
         actorOrgAndRole: 'PROJECT_SUPERVISOR',
         timestamp: '2026-09-27 11:30 WIB',
         message:
@@ -655,7 +655,7 @@ const INITIAL_DISPUTE_RECORDS: ConstructionDisputeRecord[] = [
       basisText:
         'Dasar Keputusan: Perbaikan H195 telah dilaksanakan oleh kontraktor dan divalidasi oleh Pengawas Independen sehingga pencairan dilanjutkan.',
       authorityText:
-        'Ditetapkan oleh Pihak Berwenang: Ir. Dian Kusuma, IPU & Drs. Bambang Sutrisno (2026-09-28 09:45 WIB)',
+        'Ditetapkan oleh Pihak Berwenang: Ir. Dian Permatasari, MT & Citra Ayu Deswina Maharani (2026-09-28 09:45 WIB)',
     },
   },
 ];

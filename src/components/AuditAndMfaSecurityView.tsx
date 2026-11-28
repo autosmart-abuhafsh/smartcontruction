@@ -42,11 +42,11 @@ const SEEDED_PROTECTED_AUDIT_ROWS: ProtectedAuditRow[] = [
   {
     id: 'AUD-PRD-001',
     timestamp: '2026-08-01 09:15 WIB',
-    actorName: 'Drs. Bambang Sutrisno',
-    actorUserId: 'usr-owner-1',
+    actorName: 'Citra Ayu Deswina Maharani',
+    actorUserId: 'usr-client',
     actorRoleCode: 'PROJECT_OWNER',
     actorRole: 'client',
-    activity: 'Menyetujui Kontrak Digital KTR/SB/2026/VIII/001-DEMO & Setor Escrow H0',
+    activity: 'Menyetujui Kontrak Digital KTR/SB/2026/VIII/001 & Setor Escrow H0',
     beforeState: 'Menunggu Persetujuan',
     afterState: 'Kontrak Aktif (Terkunci)',
     sessionIp: '103.144.20.11',
@@ -56,11 +56,11 @@ const SEEDED_PROTECTED_AUDIT_ROWS: ProtectedAuditRow[] = [
   {
     id: 'AUD-PRD-002',
     timestamp: '2026-10-31 14:00 WIB',
-    actorName: 'Ir. Dian Kusuma, IPU (Konsultan Pengawas)',
-    actorUserId: 'usr-supervisor-1',
+    actorName: 'Ir. Dian Permatasari, MT (Konsultan Pengawas)',
+    actorUserId: 'usr-verifier',
     actorRoleCode: 'PROJECT_SUPERVISOR',
     actorRole: 'verifikator',
-    activity: 'Menerima Bukti Teknis Tahap 2 Struktur Bangunan (LHP-SUP-2026-10-002-DEMO)',
+    activity: 'Menerima Bukti Teknis Tahap 2 Struktur Bangunan (LHP-SUP-2026-10-002)',
     beforeState: 'Menunggu pemeriksaan',
     afterState: 'Diterima (Disetujui Pengawas)',
     sessionIp: '114.122.45.89',
@@ -70,29 +70,29 @@ const SEEDED_PROTECTED_AUDIT_ROWS: ProtectedAuditRow[] = [
   {
     id: 'AUD-PRD-003',
     timestamp: '2026-11-01 10:15 WIB',
-    actorName: 'Siti Rahmawati, S.E., M.Ak.',
-    actorUserId: 'usr-verifier-1',
+    actorName: 'Ir. Dian Permatasari, MT (PT Presisi Rekayasa Mandiri)',
+    actorUserId: 'usr-verifier',
     actorRoleCode: 'ADMIN_VERIFIER',
     actorRole: 'verifikator',
-    activity: 'Memvalidasi Kelengkapan Dokumen Administratif Tahap 2 Gedung Aula',
+    activity: 'Memvalidasi Kelengkapan Dokumen Administratif Tahap 2 Pembangunan Rumah di Gang Mahanggi',
     beforeState: 'Menunggu Verifikasi Administrasi',
     afterState: 'Dokumen Lengkap & Valid',
     sessionIp: '103.144.20.45',
-    verificationTag: '',
+    verificationTag: '(MFA & PIN Verified)',
     sha256Hash: 'SHA256:ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d',
   },
   {
     id: 'AUD-PRD-004',
     timestamp: '2026-11-23 11:00 WIB',
-    actorName: 'Ir. Raka Pratama (PT Bangun Karya Mandiri)',
-    actorUserId: 'usr-contractor-1',
+    actorName: 'Muhajirin Kasim (Muhajirin Kasim Konstruksi)',
+    actorUserId: 'usr-contractor',
     actorRoleCode: 'CONTRACTOR',
     actorRole: 'contractor',
-    activity: 'Mengunggah Bukti Pekerjaan Fasad Kaca & Uji Sealant Tahap 3 Renovasi Kantor Pusat',
+    activity: 'Mengunggah Bukti Pekerjaan Dinding Bata & Rangka Atap Tahap 3 Rumah Gang Mahanggi',
     beforeState: 'Menunggu bukti',
     afterState: 'Menunggu verifikasi (H180)',
     sessionIp: '182.253.88.19',
-    verificationTag: '',
+    verificationTag: '(MFA & PIN Verified)',
     sha256Hash: 'SHA256:e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683',
   },
 ];
@@ -100,13 +100,13 @@ const SEEDED_PROTECTED_AUDIT_ROWS: ProtectedAuditRow[] = [
 function roleToPrdCode(role: UserRole): { userId: string; roleCode: string } {
   switch (role) {
     case 'client':
-      return { userId: 'usr-owner-1', roleCode: 'PROJECT_OWNER' };
+      return { userId: 'usr-client', roleCode: 'PROJECT_OWNER' };
     case 'contractor':
-      return { userId: 'usr-contractor-1', roleCode: 'CONTRACTOR' };
+      return { userId: 'usr-contractor', roleCode: 'CONTRACTOR' };
     case 'verifikator':
-      return { userId: 'usr-supervisor-1', roleCode: 'PROJECT_SUPERVISOR' };
+      return { userId: 'usr-verifier', roleCode: 'PROJECT_SUPERVISOR' };
     case 'super_admin':
-      return { userId: 'usr-superadmin-1', roleCode: 'SUPER_ADMIN' };
+      return { userId: 'usr-admin', roleCode: 'SUPER_ADMIN' };
   }
 }
 
@@ -204,16 +204,16 @@ export const AuditTrailProtectedView: React.FC<{
   }, [combinedRows, searchQuery, roleFilter]);
 
   return (
-    <div className="space-y-5">
-      {/* Header Card matching image_20581e03.png */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
+    <div className="space-y-4 sm:space-y-5">
+      {/* Header Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-800 dark:text-slate-100 shrink-0 mt-0.5">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-800 dark:text-slate-100 shrink-0 mt-0.5">
               <History className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                 Audit Trail Terproteksi (Immutable Activity Log — Bagian 19 PRD)
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
@@ -230,7 +230,7 @@ export const AuditTrailProtectedView: React.FC<{
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari aktivitas, user, hash..."
+                placeholder="Cari aktivitas, pengguna, hash..."
                 className="w-full sm:w-56 pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
               />
             </div>
@@ -238,14 +238,14 @@ export const AuditTrailProtectedView: React.FC<{
               aria-label="Filter Role Audit Log"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-medium"
+              className="w-full sm:w-auto px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-medium"
             >
               <option value="ALL">Semua Role Pengguna</option>
-              <option value="PROJECT_OWNER">PROJECT_OWNER (Pengguna Jasa)</option>
-              <option value="PROJECT_SUPERVISOR">PROJECT_SUPERVISOR (Pengawas)</option>
-              <option value="ADMIN_VERIFIER">ADMIN_VERIFIER (Verifikator Admin)</option>
-              <option value="CONTRACTOR">CONTRACTOR (Penyedia Kontraktor)</option>
-              <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              <option value="PROJECT_OWNER">PROJECT_OWNER (Citra Ayu Deswina Maharani)</option>
+              <option value="CONTRACTOR">CONTRACTOR (Muhajirin Kasim)</option>
+              <option value="PROJECT_SUPERVISOR">PROJECT_SUPERVISOR (Ir. Dian Permatasari, MT)</option>
+              <option value="ADMIN_VERIFIER">ADMIN_VERIFIER (Verifikasi Administratif)</option>
+              <option value="SUPER_ADMIN">SUPER_ADMIN (Rendra Wijaya)</option>
             </select>
           </div>
         </div>
@@ -256,8 +256,8 @@ export const AuditTrailProtectedView: React.FC<{
         {/* Mobile Cards (< md) */}
         <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
           {filteredRows.map((row) => (
-            <div key={row.id} className="py-4 first:pt-1 last:pb-1 space-y-2.5 text-xs">
-              <div className="flex items-center justify-between gap-2">
+            <div key={row.id} className="py-3.5 first:pt-1 last:pb-1 space-y-2.5 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono font-semibold text-slate-700 dark:text-slate-300 text-[11px]">
                   {row.timestamp}
                 </span>
@@ -266,15 +266,15 @@ export const AuditTrailProtectedView: React.FC<{
                 </span>
               </div>
 
-              <div className="font-bold text-slate-900 dark:text-white text-sm">
+              <div className="font-bold text-slate-900 dark:text-white text-sm leading-snug">
                 {row.actorName}
               </div>
 
-              <div className="text-slate-700 dark:text-slate-300 leading-relaxed">
+              <div className="text-slate-700 dark:text-slate-300 leading-relaxed break-words">
                 {row.activity}
               </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 font-mono text-[11px]">
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 font-mono text-[11px] leading-relaxed break-words">
                 <span className="text-slate-500 dark:text-slate-400">{row.beforeState}</span>{' '}
                 <span className="text-slate-700 dark:text-slate-300 font-bold">&rarr;</span>{' '}
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold">
@@ -286,15 +286,15 @@ export const AuditTrailProtectedView: React.FC<{
                 <div className="text-slate-500 dark:text-slate-400">
                   {row.sessionIp} {row.verificationTag}
                 </div>
-                <div className="text-blue-600 dark:text-blue-400 truncate">
-                  {row.sha256Hash.slice(0, 37)}...
+                <div className="text-blue-600 dark:text-blue-400 break-all">
+                  {row.sha256Hash.slice(0, 35)}...
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Desktop Table (>= md) matching image_20581e03.png */}
+        {/* Desktop Table (>= md) */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -366,7 +366,11 @@ export const AuditTrailProtectedView: React.FC<{
 
 /* ============================================================================
  * MODUL L: PUSAT KEAMANAN & MULTI-FACTOR AUTHENTICATION (MFA BACKEND OTP + PIN)
- * Berlaku untuk semua pengguna: Pengguna Jasa, Penyedia Kontraktor, Pengawas, Super Admin
+ * Berlaku untuk semua pengguna:
+ * - Pengguna Jasa / Pemilik Proyek: Citra Ayu Deswina Maharani
+ * - Penyedia Jasa / Kontraktor: Muhajirin Kasim
+ * - Pengawas / Verifikator: Ir. Dian Permatasari, MT
+ * - Super Admin: Rendra Wijaya
  * ========================================================================== */
 
 interface MfaChallengeRecord {
@@ -407,8 +411,8 @@ const INITIAL_ROLE_PIN_CREDENTIALS: RolePinCredential[] = [
     role: 'client',
     roleTitle: 'Pengguna Jasa / Pemilik Proyek',
     prdRoleCode: 'PROJECT_OWNER',
-    userName: 'Drs. Bambang Sutrisno & Citra Ayu Deswina Maharani',
-    organization: 'Pemilik Proyek / Pengguna Jasa',
+    userName: 'Citra Ayu Deswina Maharani',
+    organization: 'Citra Ayu Deswina Maharani (Pemilik Proyek)',
     pinCode: '112026',
     otpDemoCode: '482910',
     mfaEnabled: true,
@@ -420,8 +424,8 @@ const INITIAL_ROLE_PIN_CREDENTIALS: RolePinCredential[] = [
     role: 'contractor',
     roleTitle: 'Penyedia Jasa / Kontraktor',
     prdRoleCode: 'CONTRACTOR',
-    userName: 'Muhajirin Kasim & Ir. Raka Pratama',
-    organization: 'Kontraktor Pelaksana / PT Bangun Karya Mandiri',
+    userName: 'Muhajirin Kasim',
+    organization: 'Muhajirin Kasim Konstruksi (Bank Mandiri 1480025086508)',
     pinCode: '222026',
     otpDemoCode: '739204',
     mfaEnabled: true,
@@ -433,8 +437,8 @@ const INITIAL_ROLE_PIN_CREDENTIALS: RolePinCredential[] = [
     role: 'verifikator',
     roleTitle: 'Pengawas / Verifikator Independen',
     prdRoleCode: 'PROJECT_SUPERVISOR',
-    userName: 'Ir. Dian Permatasari, MT & Ir. Dian Kusuma, IPU',
-    organization: 'Konsultan Pengawas & Verifikator Teknis',
+    userName: 'Ir. Dian Permatasari, MT',
+    organization: 'PT Presisi Rekayasa Mandiri (Konsultan Pengawas)',
     pinCode: '332026',
     otpDemoCode: '615840',
     mfaEnabled: true,
@@ -447,7 +451,7 @@ const INITIAL_ROLE_PIN_CREDENTIALS: RolePinCredential[] = [
     roleTitle: 'Super Admin / Administrator Sistem',
     prdRoleCode: 'SUPER_ADMIN',
     userName: 'Rendra Wijaya',
-    organization: 'SmartBuild Core Platform Security',
+    organization: 'SmartBuild Platform Core',
     pinCode: '992026',
     otpDemoCode: '804129',
     mfaEnabled: true,
@@ -460,7 +464,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-1',
     timestamp: '2026-11-28 14:09 WIB',
-    userName: 'Drs. Bambang Sutrisno',
+    userName: 'Citra Ayu Deswina Maharani',
     roleCode: 'PROJECT_OWNER',
     userRole: 'client',
     actionType: 'TINDAKAN_ADMIN_KRITIS',
@@ -472,7 +476,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-2',
     timestamp: '2026-11-28 14:09 WIB',
-    userName: 'Drs. Bambang Sutrisno',
+    userName: 'Citra Ayu Deswina Maharani',
     roleCode: 'PROJECT_OWNER',
     userRole: 'client',
     actionType: 'TINDAKAN_ADMIN_KRITIS',
@@ -484,7 +488,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-3',
     timestamp: '2026-08-01 09:15 WIB',
-    userName: 'Drs. Bambang Sutrisno',
+    userName: 'Citra Ayu Deswina Maharani',
     roleCode: 'PROJECT_OWNER',
     userRole: 'client',
     actionType: 'PERSETUJUAN_KONTRAK',
@@ -496,7 +500,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-4',
     timestamp: '2026-09-18 14:19 WIB',
-    userName: 'Drs. Bambang Sutrisno',
+    userName: 'Citra Ayu Deswina Maharani',
     roleCode: 'PROJECT_OWNER',
     userRole: 'client',
     actionType: 'OTORISASI_PENCAIRAN',
@@ -508,7 +512,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-5',
     timestamp: '2026-10-31 14:00 WIB',
-    userName: 'Ir. Dian Kusuma, IPU',
+    userName: 'Ir. Dian Permatasari, MT',
     roleCode: 'PROJECT_SUPERVISOR',
     userRole: 'verifikator',
     actionType: 'VERIFIKASI_PENGAWAS',
@@ -520,7 +524,7 @@ const INITIAL_MFA_CHALLENGES: MfaChallengeRecord[] = [
   {
     id: 'MFA-LOG-6',
     timestamp: '2026-11-23 11:00 WIB',
-    userName: 'Muhajirin Kasim / Ir. Raka Pratama',
+    userName: 'Muhajirin Kasim',
     roleCode: 'CONTRACTOR',
     userRole: 'contractor',
     actionType: 'UPLOAD_BUKTI_KONTRAKTOR',
@@ -624,7 +628,7 @@ export const MfaAndPinSecurityView: React.FC<{
     const otpSentRecord: MfaChallengeRecord = {
       id: `MFA-OTP-${Date.now()}-A`,
       timestamp: nowStr,
-      userName: activeCredential.userName.split('&')[0].trim(),
+      userName: activeCredential.userName,
       roleCode: activeCredential.prdRoleCode,
       userRole: activeCredential.role,
       actionType: selectedActionType,
@@ -637,7 +641,7 @@ export const MfaAndPinSecurityView: React.FC<{
     const verifiedRecord: MfaChallengeRecord = {
       id: `MFA-VER-${Date.now()}-B`,
       timestamp: nowStr,
-      userName: activeCredential.userName.split('&')[0].trim(),
+      userName: activeCredential.userName,
       roleCode: activeCredential.prdRoleCode,
       userRole: activeCredential.role,
       actionType: selectedActionType,
@@ -657,7 +661,7 @@ export const MfaAndPinSecurityView: React.FC<{
     appendLogAndNotif(
       `Verifikasi MFA OTP & Kode PIN (${activeCredential.prdRoleCode})`,
       'Keamanan MFA & PIN',
-      `${activeCredential.userName.split('&')[0].trim()} berhasil memverifikasi tantangan ${selectedActionType} dengan Token ${token}`
+      `${activeCredential.userName} berhasil memverifikasi tantangan ${selectedActionType} dengan Token ${token}`
     );
   };
 
@@ -684,36 +688,36 @@ export const MfaAndPinSecurityView: React.FC<{
     );
     setEditingPinCredId(null);
     setVerifiedTokenBanner(
-      `Kode PIN 6-Digit untuk ${target.roleTitle} (${target.prdRoleCode}) berhasil diperbarui!`
+      `Kode PIN 6-Digit untuk ${target.userName} (${target.prdRoleCode}) berhasil diperbarui!`
     );
 
     appendLogAndNotif(
       `Pembaruan Kode PIN Keamanan 6-Digit (${target.prdRoleCode})`,
       'Keamanan MFA & PIN',
-      `Kode PIN keamanan untuk ${target.roleTitle} telah diperbarui dan dienkripsi.`
+      `Kode PIN keamanan untuk ${target.userName} (${target.roleTitle}) telah diperbarui dan dienkripsi.`
     );
   };
 
   return (
-    <div className="space-y-5">
-      {/* Top Header Card matching image_775ffa65.png */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
+    <div className="space-y-4 sm:space-y-5">
+      {/* Top Header Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white shrink-0 mt-0.5">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
               Pusat Keamanan &amp; Multi-Factor Authentication (MFA Backend OTP &amp; Kode PIN)
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Verifikasi OTP dilakukan di backend dengan masa berlaku 5 menit, pembatasan maksimal 3 kali percobaan, dilengkapi proteksi Kode PIN 6-Digit untuk seluruh pengguna (Pengguna Jasa, Penyedia Kontraktor, Pengawas, dan Super Admin), dan tidak pernah mencatat secret key di log biasa.
+              Verifikasi OTP dilakukan di backend dengan masa berlaku 5 menit, pembatasan maksimal 3 kali percobaan, dilengkapi proteksi Kode PIN 6-Digit untuk seluruh pengguna (Citra Ayu Deswina Maharani, Muhajirin Kasim, Ir. Dian Permatasari, MT, dan Rendra Wijaya), dan tidak pernah mencatat secret key di log biasa.
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => openChallengeForRole(activeCredential)}
-                className="px-4 py-2.5 rounded-xl bg-[#071D49] hover:bg-[#0c2b6b] text-white text-xs sm:text-sm font-bold transition-colors shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#071D49] hover:bg-[#0c2b6b] text-white text-xs sm:text-sm font-bold transition-colors shadow-xs cursor-pointer text-center"
               >
                 Uji Tantangan MFA OTP Sekarang
               </button>
@@ -725,10 +729,10 @@ export const MfaAndPinSecurityView: React.FC<{
         </div>
       </div>
 
-      {/* Green Verified Session Token Banner matching image_775ffa65.png */}
+      {/* Green Verified Session Token Banner */}
       {verifiedTokenBanner && (
         <div className="bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 rounded-xl px-4 py-3.5 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="font-mono sm:font-sans break-all">{verifiedTokenBanner}</span>
           </div>
@@ -739,11 +743,11 @@ export const MfaAndPinSecurityView: React.FC<{
       )}
 
       {/* Proteksi MFA + Kode PIN 6-Digit untuk Seluruh Peran Pengguna */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <KeyRound className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
               <span>Konfigurasi MFA OTP &amp; Kode PIN Keamanan Seluruh Pengguna</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -770,7 +774,7 @@ export const MfaAndPinSecurityView: React.FC<{
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         {cred.roleTitle}
@@ -784,8 +788,11 @@ export const MfaAndPinSecurityView: React.FC<{
                         </span>
                       )}
                     </div>
-                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
                       {cred.userName}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {cred.organization}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold shrink-0">
@@ -830,7 +837,7 @@ export const MfaAndPinSecurityView: React.FC<{
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <span className="text-[10px] font-mono text-slate-400">
                     Terakhir diverifikasi: {cred.lastVerifiedAt}
                   </span>
@@ -843,14 +850,14 @@ export const MfaAndPinSecurityView: React.FC<{
                         setConfirmPinValue(cred.pinCode);
                         setPinEditError('');
                       }}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                      className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 cursor-pointer text-center"
                     >
                       Ubah Kode PIN
                     </button>
                     <button
                       type="button"
                       onClick={() => openChallengeForRole(cred)}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#071D49] hover:bg-[#0d2d6c] text-white text-[11px] font-bold cursor-pointer"
+                      className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg bg-[#071D49] hover:bg-[#0d2d6c] text-white text-[11px] font-bold cursor-pointer text-center"
                     >
                       Uji MFA + PIN
                     </button>
@@ -862,8 +869,8 @@ export const MfaAndPinSecurityView: React.FC<{
         </div>
       </div>
 
-      {/* Riwayat Autentikasi & Tantangan MFA Table matching image_775ffa65.png */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
+      {/* Riwayat Autentikasi & Tantangan MFA Table */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs">
         <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-4">
           Riwayat Autentikasi &amp; Tantangan MFA
         </h2>
@@ -892,8 +899,8 @@ export const MfaAndPinSecurityView: React.FC<{
                   {item.roleCode}
                 </div>
               </div>
-              <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
-                <span className="text-slate-800 dark:text-slate-200 font-semibold">
+              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px]">
+                <span className="text-slate-800 dark:text-slate-200 font-semibold break-all">
                   {item.actionType}
                 </span>
                 <span className="text-slate-600 dark:text-slate-400">
@@ -907,14 +914,14 @@ export const MfaAndPinSecurityView: React.FC<{
           ))}
         </div>
 
-        {/* Desktop Table (>= md) matching image_775ffa65.png */}
+        {/* Desktop Table (>= md) */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/90 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs">
                 <th className="py-3.5 px-4 font-semibold w-[14%]">Waktu</th>
-                <th className="py-3.5 px-4 font-semibold w-[20%]">Pengguna &amp; Role</th>
-                <th className="py-3.5 px-4 font-semibold w-[22%]">Jenis Tindakan Kritis</th>
+                <th className="py-3.5 px-4 font-semibold w-[22%]">Pengguna &amp; Role</th>
+                <th className="py-3.5 px-4 font-semibold w-[20%]">Jenis Tindakan Kritis</th>
                 <th className="py-3.5 px-4 font-semibold w-[14%]">Status Verifikasi</th>
                 <th className="py-3.5 px-4 font-semibold w-[10%]">Percobaan</th>
                 <th className="py-3.5 px-4 font-semibold w-[20%]">Perangkat / Kanal</th>
@@ -970,7 +977,7 @@ export const MfaAndPinSecurityView: React.FC<{
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#071D49] text-white flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#071D49] text-white flex items-center justify-center shrink-0">
                   <Lock className="w-4 h-4" />
                 </div>
                 <div>
@@ -994,7 +1001,7 @@ export const MfaAndPinSecurityView: React.FC<{
             <form onSubmit={handleVerifyMfaAndPin} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Pilih Peran Pengguna (Semua Role Terproteksi)
+                  Pilih Pengguna &amp; Peran (Semua Role Terproteksi)
                 </label>
                 <select
                   value={selectedCredId}
@@ -1011,7 +1018,7 @@ export const MfaAndPinSecurityView: React.FC<{
                 >
                   {roleCredentials.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.roleTitle} ({c.prdRoleCode})
+                      {c.userName} — {c.roleTitle} ({c.prdRoleCode})
                     </option>
                   ))}
                 </select>
@@ -1104,7 +1111,7 @@ export const MfaAndPinSecurityView: React.FC<{
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-5 shadow-xl space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
                 <KeyRound className="w-4 h-4" />
               </div>
               <div>
@@ -1112,7 +1119,8 @@ export const MfaAndPinSecurityView: React.FC<{
                   Ubah Kode PIN Keamanan 6-Digit
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {roleCredentials.find((c) => c.id === editingPinCredId)?.roleTitle}
+                  {roleCredentials.find((c) => c.id === editingPinCredId)?.userName} (
+                  {roleCredentials.find((c) => c.id === editingPinCredId)?.roleTitle})
                 </p>
               </div>
             </div>
