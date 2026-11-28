@@ -25,6 +25,8 @@ import {
   SlidersHorizontal,
   Cpu,
   Scale,
+  ShieldCheck,
+  FileCheck2,
 } from 'lucide-react';
 import { INITIAL_DATABASE } from './data/seedData';
 import {
@@ -84,6 +86,10 @@ import {
   DisputeManagementView,
   EscrowWorkflowView,
 } from './components/EscrowAndDisputesView';
+import {
+  AuditTrailProtectedView,
+  MfaAndPinSecurityView,
+} from './components/AuditAndMfaSecurityView';
 
 const STORAGE_KEY = 'smartbuild_enterprise_db_v3_mahanggi';
 const THEME_STORAGE_KEY = 'smartbuild_theme_dark_v1';
@@ -101,6 +107,8 @@ const MENU_ITEMS: { id: MenuId; label: string; shortLabel: string; icon: React.C
   { id: 'disputes', label: 'Sengketa Konstruksi', shortLabel: 'Sengketa', icon: Scale },
   { id: 'payments', label: 'Pembayaran', shortLabel: 'Bayar', icon: Wallet },
   { id: 'transactions', label: 'Riwayat Transaksi', shortLabel: 'Transaksi', icon: History },
+  { id: 'audit', label: 'Audit Log & Aktivitas', shortLabel: 'Audit Log', icon: FileCheck2 },
+  { id: 'mfa', label: 'Keamanan MFA & PIN', shortLabel: 'MFA & PIN', icon: ShieldCheck },
   { id: 'reports', label: 'Laporan', shortLabel: 'Laporan', icon: BarChart3 },
   { id: 'users', label: 'Pengguna', shortLabel: 'Pengguna', icon: Users },
   { id: 'settings', label: 'Pengaturan', shortLabel: 'Setting', icon: Settings },
@@ -273,16 +281,28 @@ export default function App() {
   ) => {
     const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 16);
     const actor = currentUser || prev.users[0];
+    const roleCode =
+      actor.role === 'client'
+        ? 'PROJECT_OWNER'
+        : actor.role === 'contractor'
+        ? 'CONTRACTOR'
+        : actor.role === 'verifikator'
+        ? 'PROJECT_SUPERVISOR'
+        : 'SUPER_ADMIN';
     const nextLogs = [
       {
         id: generateUniqueId('log'),
-        timestamp: nowStr,
+        timestamp: `${nowStr} WIB`,
         actorName: actor.name,
         actorRole: actor.role,
+        actorUserId: actor.id,
+        actorRoleCode: roleCode,
         action,
         module: moduleName,
         details,
-        ipSimulation: '10.24.18.100',
+        verificationTag: '(MFA & PIN Verified)',
+        sha256Hash: `SHA256:${Date.now().toString(16)}884c7d659a2feaa0c55ad015a3bf4f1b2b0b822c`,
+        ipSimulation: '103.144.20.11',
       },
       ...prev.activity_logs,
     ];
@@ -1358,6 +1378,30 @@ export default function App() {
           )}
 
           {activeMenu === 'transactions' && <TransactionsView db={db} />}
+
+          {activeMenu === 'audit' && <AuditTrailProtectedView db={db} />}
+
+          {activeMenu === 'mfa' && (
+            <MfaAndPinSecurityView
+              db={db}
+              currentRole={currentUser.role}
+              appendLogAndNotif={(action, moduleName, details) => {
+                setDb((prev) => {
+                  const { nextLogs, nextNotifs } = appendLogAndNotif(
+                    prev,
+                    action,
+                    moduleName,
+                    details
+                  );
+                  return {
+                    ...prev,
+                    activity_logs: nextLogs,
+                    notifications: nextNotifs,
+                  };
+                });
+              }}
+            />
+          )}
 
           {activeMenu === 'reports' && <ReportsView db={db} />}
 

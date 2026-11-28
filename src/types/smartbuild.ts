@@ -46,6 +46,8 @@ export type MenuId =
   | 'disputes'
   | 'payments'
   | 'transactions'
+  | 'audit'
+  | 'mfa'
   | 'reports'
   | 'users'
   | 'settings'
@@ -336,9 +338,15 @@ export interface ActivityLog {
   timestamp: string;
   actorName: string;
   actorRole: UserRole;
+  actorUserId?: string;
+  actorRoleCode?: string;
   action: string;
   module: string;
   details: string;
+  beforeState?: string;
+  afterState?: string;
+  verificationTag?: string;
+  sha256Hash?: string;
   ipSimulation: string;
 }
 

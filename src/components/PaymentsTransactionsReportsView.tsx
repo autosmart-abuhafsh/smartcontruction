@@ -597,52 +597,164 @@ export const PaymentsAndSmartContractView: React.FC<PaymentsAndSmartContractView
 };
 
 /* ============================================================================
- * MODUL I: RIWAYAT TRANSAKSI
+ * MODUL I: RIWAYAT TRANSAKSI & ARSITEKTUR INTEGRASI BLOCKCHAIN [DEMO SIMULATION]
  * ========================================================================== */
+
+interface BlockchainTransactionItem {
+  id: string;
+  contractNumber: string;
+  referenceCode: string;
+  title: string;
+  nominal: number;
+  statusLabel: string;
+  recipient: string;
+  approvalStatus: string;
+  mfaAuthorization: string;
+  networkName: string;
+  blockTimestamp: string;
+  walletAddress: string;
+  smartContractAddress: string;
+  simulatedTxHash: string;
+  projectId: string;
+  projectName: string;
+  date: string;
+}
+
+const SEEDED_BLOCKCHAIN_TRANSACTIONS: BlockchainTransactionItem[] = [
+  {
+    id: 'TRX-SB-DEMO-20260801-H0A',
+    contractNumber: 'KTR/SB/2026/VIII/001-DEMO',
+    referenceCode: 'ESC-H0-20260801-001-DEMO',
+    title: 'Pembangunan Gedung Aula — Setoran Dana Awal Escrow (H0) — Kontrak Penuh',
+    nominal: 450000000,
+    statusLabel: 'Berhasil [SIMULASI DEMO]',
+    recipient: 'SmartBuild Escrow Vault [DEMO]',
+    approvalStatus: 'Disetujui Pemilik Proyek',
+    mfaAuthorization: 'MFA OTP Terverifikasi',
+    networkName: 'SmartBuild Polygon Amoy Testnet [DEMO SIMULATION] (Chain ID: 80002)',
+    blockTimestamp: '2026-08-01T02:20:00Z',
+    walletAddress: '0xDEMO91A2B3C4D5E6F708192A3B4C5D6E7F8091A2',
+    smartContractAddress: '0xDEMO71C94F2A8E3B9D1029384756ABCDEF110001',
+    simulatedTxHash: '0xDEMO_SIMULATED_TX_8819a2f4c6e8b0d123456789abcdef0123456789abcdef',
+    projectId: 'PRJ-DEMO-AULA',
+    projectName: 'Pembangunan Gedung Aula',
+    date: '2026-08-01',
+  },
+  {
+    id: 'TRX-SB-DEMO-20260918-001',
+    contractNumber: 'KTR/SB/2026/VIII/001-DEMO',
+    referenceCode: 'REL-H188-20260918-001-DEMO',
+    title: 'Pembangunan Gedung Aula — Tahap 1: Pondasi Selesai (25%)',
+    nominal: 112500000,
+    statusLabel: 'Berhasil [SIMULASI DEMO]',
+    recipient: 'PT Bangun Karya Mandiri Konstruksi [DEMO]',
+    approvalStatus: 'Disetujui Penuh (Pengawas & Pemilik)',
+    mfaAuthorization: 'MFA Terverifikasi (MFA-VERIFIED-20260918-01)',
+    networkName: 'SmartBuild Polygon Amoy Testnet [DEMO SIMULATION] (Chain ID: 80002)',
+    blockTimestamp: '2026-09-18T07:20:00Z',
+    walletAddress: '0xDEMO44F5E6D7C8B9A0123456789ABCDEF0123456',
+    smartContractAddress: '0xDEMO71C94F2A8E3B9D1029384756ABCDEF110001',
+    simulatedTxHash: '0xDEMO_SIMULATED_TX_4421b9d3e7f1a5c67890123456789abcdef0123456789a',
+    projectId: 'PRJ-DEMO-AULA',
+    projectName: 'Pembangunan Gedung Aula',
+    date: '2026-09-18',
+  },
+  {
+    id: 'TRX-SB-DEMO-20260820-002',
+    contractNumber: 'KTR/SB/2026/VII/002-DEMO',
+    referenceCode: 'REL-H188-20260820-002-DEMO',
+    title: 'Renovasi Kantor Pusat — Tahap 1: Pondasi & Perkuatan (25%)',
+    nominal: 60000000,
+    statusLabel: 'Berhasil [SIMULASI DEMO]',
+    recipient: 'PT Bangun Karya Mandiri Konstruksi [DEMO]',
+    approvalStatus: 'Disetujui Penuh (Pengawas & Pemilik)',
+    mfaAuthorization: 'MFA Terverifikasi (MFA-VERIFIED-20260820-02)',
+    networkName: 'SmartBuild Polygon Amoy Testnet [DEMO SIMULATION] (Chain ID: 80002)',
+    blockTimestamp: '2026-08-20T09:15:00Z',
+    walletAddress: '0xDEMO44F5E6D7C8B9A0123456789ABCDEF0123456',
+    smartContractAddress: '0xDEMO71C94F2A8E3B9D1029384756ABCDEF110002',
+    simulatedTxHash: '0xDEMO_SIMULATED_TX_7732c8e4f9a2b1d0987654321fedcba0987654321fedcb',
+    projectId: 'PRJ-DEMO-KANTOR',
+    projectName: 'Renovasi Kantor Pusat',
+    date: '2026-08-20',
+  },
+];
 
 export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [projectFilter, setProjectFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [dateFilter, setDateFilter] = useState('');
 
-  const filteredTransactions = db.transactions.filter((t) => {
+  const allBlockchainTransactions: BlockchainTransactionItem[] = [
+    ...SEEDED_BLOCKCHAIN_TRANSACTIONS,
+    ...db.transactions.map((t, index) => {
+      const contract = db.contracts.find((c) => c.projectId === t.projectId);
+      const sc = db.smart_contracts.find((s) => s.projectId === t.projectId);
+      const rawHash = t.txHash.startsWith('0xDEMO_SIMULATED_TX_')
+        ? t.txHash
+        : `0xDEMO_SIMULATED_TX_${t.txHash.replace(/^0x/i, '')}a1b2c3d4e5f60718293a`;
+      return {
+        id: t.id.startsWith('TRX-SB') ? t.id : `TRX-SB-DEMO-${t.date.replace(/-/g, '')}-00${index + 3}`,
+        contractNumber: contract?.contractNumber || 'KTR/SB/2026/IX/003-DEMO',
+        referenceCode: `REL-H188-${t.date.replace(/-/g, '')}-00${index + 1}-DEMO`,
+        title: `${t.projectName} — ${t.milestoneName}`,
+        nominal: t.nominal,
+        statusLabel: 'Berhasil [SIMULASI DEMO]',
+        recipient: t.receiver,
+        approvalStatus: 'Disetujui Penuh (Pengawas & Pemilik)',
+        mfaAuthorization: `MFA & PIN Terverifikasi (MFA-VERIFIED-${t.date.replace(/-/g, '')}-0${index + 1})`,
+        networkName: 'SmartBuild Polygon Amoy Testnet [DEMO SIMULATION] (Chain ID: 80002)',
+        blockTimestamp: `${t.date}T08:30:00Z`,
+        walletAddress: '0xDEMO88A1B2C3D4E5F60718293A4B5C6D7E8F9012',
+        smartContractAddress:
+          sc?.contractAddress || '0xDEMO71C94F2A8E3B9D1029384756ABCDEF110003',
+        simulatedTxHash: rawHash,
+        projectId: t.projectId,
+        projectName: t.projectName,
+        date: t.date,
+      };
+    }),
+  ];
+
+  const filteredTransactions = allBlockchainTransactions.filter((t) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
+      !q ||
       t.id.toLowerCase().includes(q) ||
-      t.projectName.toLowerCase().includes(q) ||
-      t.milestoneName.toLowerCase().includes(q) ||
-      t.txHash.toLowerCase().includes(q);
-    const matchesProject = projectFilter === 'ALL' || t.projectId === projectFilter;
-    const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
-    const matchesDate = !dateFilter || t.date >= dateFilter;
-    return matchesSearch && matchesProject && matchesStatus && matchesDate;
+      t.title.toLowerCase().includes(q) ||
+      t.contractNumber.toLowerCase().includes(q) ||
+      t.recipient.toLowerCase().includes(q) ||
+      t.simulatedTxHash.toLowerCase().includes(q);
+    const matchesProject =
+      projectFilter === 'ALL' ||
+      t.projectId === projectFilter ||
+      t.projectName.toLowerCase().includes(projectFilter.toLowerCase());
+    return matchesSearch && matchesProject;
   });
 
   const handleExportExcelCsv = () => {
     const headers = [
-      'ID Transaksi',
-      'Tanggal',
-      'Nama Proyek',
-      'Tahapan Pekerjaan',
-      'Pengirim',
+      'No. Transaksi',
+      'Kontrak',
+      'Referensi',
+      'Judul Transaksi',
       'Penerima',
       'Nominal (Rp)',
-      'Metode Pembayaran',
-      'Status Transaksi',
-      'Transaction Hash (Simulasi)',
+      'Status Persetujuan',
+      'Otorisasi MFA',
+      'Smart Contract',
+      'Simulated Tx Hash',
     ];
     const rows = filteredTransactions.map((t) => [
       t.id,
-      t.date,
-      `"${t.projectName}"`,
-      `"${t.milestoneName}"`,
-      `"${t.sender}"`,
-      `"${t.receiver}"`,
+      t.contractNumber,
+      t.referenceCode,
+      `"${t.title}"`,
+      `"${t.recipient}"`,
       t.nominal,
-      `"${t.paymentMethod}"`,
-      `"${t.status}"`,
-      t.txHash,
+      `"${t.approvalStatus}"`,
+      `"${t.mfaAuthorization}"`,
+      t.smartContractAddress,
+      t.simulatedTxHash,
     ]);
     const csvContent =
       'data:text/csv;charset=utf-8,' +
@@ -650,215 +762,163 @@ export const TransactionsView: React.FC<{ db: SmartBuildDatabase }> = ({ db }) =
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'SmartBuild_Riwayat_Transaksi_DEMO.csv');
+    link.setAttribute('download', 'SmartBuild_Riwayat_Transaksi_Blockchain_DEMO.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header Card matching image_cced9e5e.png */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
-            Riwayat Transaksi &amp; Jejak Audit Pembayaran (DEMO)
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            Riwayat Transaksi &amp; Arsitektur Integrasi Blockchain [DEMO SIMULATION]
           </h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Daftar lengkap pencairan termin pembayaran simulasi beserta pengirim, penerima, nominal,
-            dan hash transaksi.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Seluruh transaksi simulasi di bawah ini memiliki label DEMO dan tidak terhubung ke jaringan mainnet produksi sebelum persetujuan dan audit smart contract.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 no-print">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Export PDF</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportExcelCsv}
-            className="px-3.5 py-2 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-xs font-semibold text-white flex items-center gap-1.5"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export Excel (CSV)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs no-print">
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            aria-label="Cari riwayat transaksi"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari ID transaksi, tahapan, tx hash..."
-            className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
-          />
-        </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-2 no-print shrink-0">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              aria-label="Cari riwayat transaksi blockchain"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari No. Transaksi, Kontrak, Tx Hash..."
+              className="w-full sm:w-56 pl-8 pr-3 py-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-xs"
+            />
+          </div>
           <select
             aria-label="Filter proyek transaksi"
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            className="px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium"
           >
             <option value="ALL">Semua Proyek</option>
+            <option value="Pembangunan Gedung Aula">Pembangunan Gedung Aula</option>
+            <option value="Renovasi Kantor Pusat">Renovasi Kantor Pusat</option>
             {db.projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <select
-            aria-label="Filter status transaksi"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
           >
-            <option value="ALL">Semua Status Transaksi</option>
-            <option value="Berhasil (DEMO)">Berhasil (DEMO)</option>
-            <option value="Diproses (DEMO)">Diproses (DEMO)</option>
-            <option value="Gagal (DEMO)">Gagal (DEMO)</option>
-          </select>
-        </div>
-        <div>
-          <input
-            type="date"
-            aria-label="Filter tanggal transaksi"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg"
-          />
+            <Printer className="w-3.5 h-3.5" />
+            <span>PDF</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportExcelCsv}
+            className="px-3 py-2 rounded-xl bg-[#071D49] hover:bg-slate-800 text-xs font-semibold text-white flex items-center gap-1.5"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>CSV</span>
+          </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-        {/* Mobile Transaction Cards (< md) */}
-        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-          {filteredTransactions.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
-              Tidak ada transaksi yang sesuai filter.
-            </div>
-          ) : (
-            filteredTransactions.map((trx) => (
-              <div key={trx.id} className="p-4 space-y-2.5 text-xs">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-mono font-bold text-[#071D49] dark:text-blue-300">
-                      {trx.id} · {formatDateID(trx.date)}
-                    </div>
-                    <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5 leading-snug">
-                      {trx.projectName}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {trx.milestoneName}
-                    </div>
+      {/* Transaction Cards matching image_cced9e5e.png */}
+      <div className="space-y-4">
+        {filteredTransactions.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            Tidak ada transaksi yang sesuai filter pencarian.
+          </div>
+        ) : (
+          filteredTransactions.map((trx) => (
+            <div
+              key={trx.id}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            >
+              {/* Top Row: Transaction Metadata & Right Nominal + Status */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="font-mono text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 break-words">
+                    No. Transaksi: {trx.id} · Kontrak: {trx.contractNumber} · Ref:{' '}
+                    {trx.referenceCode}
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] font-bold text-[11px] shrink-0">
-                    {trx.status}
-                  </span>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                    {trx.title}
+                  </h2>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-1 text-[11px]">
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400">Dari:</span>{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-100">
-                      {trx.sender}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400">Ke Rekening:</span>{' '}
-                    <span className="font-semibold text-slate-800 dark:text-slate-100">
-                      {trx.receiver}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-0.5">
-                  <div className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                <div className="md:text-right shrink-0">
+                  <div className="font-mono text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tabular-nums">
                     {formatRupiah(trx.nominal)}
                   </div>
-                  <div className="font-mono text-[10px] text-slate-400 truncate max-w-[180px]">
-                    {trx.txHash}
+                  <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {trx.statusLabel}
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
 
-        {/* Desktop Transaction Table (>= md) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
-                <th className="py-3 px-4 font-semibold">ID Transaksi &amp; Tanggal</th>
-                <th className="py-3 px-4 font-semibold">Proyek &amp; Tahapan</th>
-                <th className="py-3 px-4 font-semibold">Pengirim &rarr; Penerima</th>
-                <th className="py-3 px-4 font-semibold text-right">Nominal</th>
-                <th className="py-3 px-4 font-semibold">Metode &amp; Tx Hash</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    Tidak ada transaksi yang sesuai filter.
-                  </td>
-                </tr>
-              ) : (
-                filteredTransactions.map((trx) => (
-                  <tr key={trx.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
-                    <td className="py-3.5 px-4">
-                      <div className="font-mono font-bold text-[#071D49] dark:text-blue-300">
-                        {trx.id}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {formatDateID(trx.date)}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        {trx.projectName}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {trx.milestoneName}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
-                      <div>Dari: {trx.sender}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Ke: {trx.receiver}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
-                      {formatRupiah(trx.nominal)}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="text-slate-700 dark:text-slate-300">{trx.paymentMethod}</div>
-                      <div className="font-mono text-[11px] text-slate-400 truncate max-w-[180px]">
-                        {trx.txHash}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-[#10B981] whitespace-nowrap">
-                      {trx.status}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              {/* Middle 3-column Metadata Row: Penerima, Status Persetujuan, Otorisasi MFA */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">Penerima: </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {trx.recipient}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Status Persetujuan:{' '}
+                  </span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {trx.approvalStatus}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">Otorisasi MFA: </span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">
+                    {trx.mfaAuthorization}
+                  </span>
+                </div>
+              </div>
+
+              {/* Dark Navy Blockchain Telemetry Box matching image_cced9e5e.png */}
+              <div className="bg-[#0B1528] text-slate-300 rounded-xl p-4 font-mono text-[11px] sm:text-xs space-y-2.5 overflow-x-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-slate-400">Network: </span>
+                    <span className="font-bold text-white">{trx.networkName}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Waktu Blok: </span>
+                    <span className="font-bold text-white">{trx.blockTimestamp}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                  <div className="break-all">
+                    <span className="text-slate-400">Wallet Address: </span>
+                    <span className="font-bold text-slate-100">{trx.walletAddress}</span>
+                  </div>
+                  <div className="break-all">
+                    <span className="text-slate-400">Smart Contract: </span>
+                    <span className="font-bold text-slate-100">
+                      {trx.smartContractAddress}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="break-all pt-0.5">
+                  <span className="text-slate-400">Simulated Tx Hash: </span>
+                  <span className="font-bold text-[#38BDF8]">{trx.simulatedTxHash}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
