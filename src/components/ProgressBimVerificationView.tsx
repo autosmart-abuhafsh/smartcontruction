@@ -1636,7 +1636,72 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
       )}
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Verification Cards (< md) */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          {filteredVerifications.map((ver) => (
+            <div key={ver.id} className="p-4 space-y-3 text-xs">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    {ver.id} · {formatDateID(ver.verificationDate)}
+                  </div>
+                  <div className="font-bold text-[#071D49] dark:text-white text-sm mt-0.5 leading-snug">
+                    {ver.projectName}
+                  </div>
+                </div>
+                <span
+                  className={`px-2 py-0.5 rounded-md font-bold text-[11px] shrink-0 ${
+                    ver.status === 'Disetujui'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981]'
+                      : ver.status === 'Ditolak'
+                      ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400'
+                      : 'bg-amber-50 dark:bg-amber-950/60 text-[#F59E0B]'
+                  }`}
+                >
+                  {ver.status}
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-1">
+                <div className="font-bold text-slate-800 dark:text-slate-100">
+                  Tahap: {ver.milestoneName}
+                </div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Bukti: {ver.supportingEvidenceSummary}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                <div>
+                  Diajukan: <strong className="font-mono">{ver.submittedPercentage}%</strong> · Disetujui:{' '}
+                  <strong className="font-mono text-[#1264F4] dark:text-blue-400">
+                    {ver.approvedPercentage}%
+                  </strong>
+                </div>
+                <div className="text-right">
+                  BIM: <strong>{ver.bimChecked ? 'Terperiksa' : 'Belum'}</strong>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Pengawas: {ver.verifierName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => openVerificationModal(ver)}
+                  className="px-3 py-1.5 rounded-lg bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold inline-flex items-center gap-1.5"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{canVerify ? 'Periksa & Putuskan' : 'Lihat Bukti'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Verification Table (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">

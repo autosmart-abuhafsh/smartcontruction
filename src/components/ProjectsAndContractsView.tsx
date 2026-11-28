@@ -302,9 +302,99 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
         </div>
       </div>
 
-      {/* Projects Table */}
+      {/* Projects List: Mobile Cards (< md) & Desktop Table (>= md) */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          {filteredProjects.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+              Tidak ada data proyek yang sesuai dengan kriteria pencarian atau filter.
+            </div>
+          ) : (
+            filteredProjects.map((project) => (
+              <div key={project.id} className="p-4 space-y-3 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                      {project.code} · {project.isDemo ? 'DEMO' : 'LIVE'} · {project.category}
+                    </div>
+                    <div className="font-bold text-[#071D49] dark:text-white text-sm mt-0.5 leading-snug">
+                      {project.name}
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#1264F4] dark:text-blue-300 font-bold font-mono shrink-0">
+                    {project.overallProgress}%
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                  <span>{project.location}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 text-[11px]">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block">Pemilik Proyek:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                      {project.clientName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 block">Kontraktor:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                      {project.contractorName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div>
+                    <div className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                      {formatRupiah(project.contractValue)}
+                    </div>
+                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      Status: {project.status}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailProject(project)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Detail</span>
+                    </button>
+                    {canCreateOrEdit && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(project)}
+                          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                          aria-label={`Edit proyek ${project.name}`}
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmProject(project)}
+                          className="p-1.5 rounded-lg border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400"
+                          aria-label={`Hapus proyek ${project.name}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
@@ -1757,7 +1847,7 @@ export const ContractPolicyView: React.FC<{ db: SmartBuildDatabase }> = ({ db })
             aria-label="Pilih kontrak proyek untuk kebijakan"
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white min-w-[230px] focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
+            className="w-full sm:w-auto max-w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1264F4]"
           >
             {projectOptions.map((proj) => (
               <option key={proj.id} value={proj.id}>

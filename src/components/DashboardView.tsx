@@ -443,23 +443,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
           </div>
 
-          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-3 text-xs">
-            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+          <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
+            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex sm:block items-center justify-between">
               <div className="text-slate-500 dark:text-slate-400">Total Progres Proyek</div>
-              <div className="text-base font-bold text-[#071D49] dark:text-white tabular-nums mt-0.5">
+              <div className="text-sm sm:text-base font-bold text-[#071D49] dark:text-white tabular-nums sm:mt-0.5">
                 {primaryProject?.overallProgress ?? 60}% dari 100%
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex sm:block items-center justify-between">
               <div className="text-slate-500 dark:text-slate-400">Tahapan Tuntas 100%</div>
-              <div className="text-base font-bold text-[#10B981] dark:text-emerald-400 tabular-nums mt-0.5">
+              <div className="text-sm sm:text-base font-bold text-[#10B981] dark:text-emerald-400 tabular-nums sm:mt-0.5">
                 {primaryMilestones.filter((m) => m.realizedProgress >= 100).length} dari{' '}
                 {primaryMilestones.length} Tahap
               </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 flex sm:block items-center justify-between">
               <div className="text-slate-500 dark:text-slate-400">Nilai Kontrak Utama</div>
-              <div className="text-base font-bold text-[#1264F4] dark:text-blue-400 tabular-nums mt-0.5">
+              <div className="text-sm sm:text-base font-bold text-[#1264F4] dark:text-blue-400 tabular-nums sm:mt-0.5">
                 {formatRupiah(primaryTotalContract)}
               </div>
             </div>
