@@ -23,6 +23,8 @@ import {
   Cloud,
   Lock,
   SlidersHorizontal,
+  Cpu,
+  Scale,
 } from 'lucide-react';
 import { INITIAL_DATABASE } from './data/seedData';
 import {
@@ -78,6 +80,10 @@ import {
   TransactionsView,
   UsersManagementView,
 } from './components/PaymentsTransactionsReportsView';
+import {
+  DisputeManagementView,
+  EscrowWorkflowView,
+} from './components/EscrowAndDisputesView';
 
 const STORAGE_KEY = 'smartbuild_enterprise_db_v3_mahanggi';
 const THEME_STORAGE_KEY = 'smartbuild_theme_dark_v1';
@@ -91,6 +97,8 @@ const MENU_ITEMS: { id: MenuId; label: string; shortLabel: string; icon: React.C
   { id: 'progress', label: 'Progress Proyek', shortLabel: 'Progres', icon: TrendingUp },
   { id: 'bim', label: 'BIM Viewer', shortLabel: 'BIM 3D', icon: Box },
   { id: 'verification', label: 'Verifikasi Pekerjaan', shortLabel: 'Verifikasi', icon: ClipboardCheck },
+  { id: 'escrow', label: 'Escrow Smart Contract', shortLabel: 'Escrow', icon: Cpu },
+  { id: 'disputes', label: 'Sengketa Konstruksi', shortLabel: 'Sengketa', icon: Scale },
   { id: 'payments', label: 'Pembayaran', shortLabel: 'Bayar', icon: Wallet },
   { id: 'transactions', label: 'Riwayat Transaksi', shortLabel: 'Transaksi', icon: History },
   { id: 'reports', label: 'Laporan', shortLabel: 'Laporan', icon: BarChart3 },
@@ -1325,6 +1333,12 @@ export default function App() {
               currentUser={currentUser}
               onProcessVerification={handleProcessVerification}
             />
+          )}
+
+          {activeMenu === 'escrow' && <EscrowWorkflowView db={db} />}
+
+          {activeMenu === 'disputes' && (
+            <DisputeManagementView db={db} currentUser={currentUser} />
           )}
 
           {activeMenu === 'payments' && (

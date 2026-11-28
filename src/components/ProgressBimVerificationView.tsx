@@ -1056,8 +1056,224 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 };
 
 /* ============================================================================
- * MODUL E: BIM VIEWER DAN INTEGRASI BIM
+ * MODUL E: BIM VIEWER 3D SPESIFIK, EDIT PARAMETER IFC & UPLOAD VERSI MODEL
  * ========================================================================== */
+
+interface DetailedBimComponent {
+  id: string;
+  stageNumber: 1 | 2 | 3 | 4 | 5;
+  stageLabel: string;
+  name: string;
+  objectType: string;
+  ifcCategory: string;
+  materialSpec: string;
+  dimensions: string;
+  volumeEstimate: string;
+  completionPct: number;
+  statusLabel: string;
+  technicalNotes: string;
+}
+
+interface BimVersionHistoryItem {
+  id: string;
+  projectKey: string;
+  versionLabel: string;
+  fileName: string;
+  format: 'GLB' | 'glTF' | 'IFC';
+  fileSize: string;
+  uploadedAt: string;
+  revisionNotes: string;
+}
+
+const INITIAL_DETAILED_BIM_COMPONENTS: Record<string, DetailedBimComponent[]> = {
+  aula: [
+    {
+      id: 'bim-comp-1',
+      stageNumber: 1,
+      stageLabel: 'Tahap Pondasi',
+      name: 'Pondasi Tapak & Tie Beam Sloof K-350',
+      objectType: 'IfcFooting / Reinforced Concrete Foundation',
+      ifcCategory: 'IFCFOOTING',
+      materialSpec: 'Beton Bertulang K-350 + Baja Tulangan Ulir BJTS 420B',
+      dimensions: '24.0 m × 16.0 m × 1.2 m (16 Titik Footplat 180×180 cm)',
+      volumeEstimate: '118.5 m³',
+      completionPct: 100,
+      statusLabel: '100% Selesai',
+      technicalNotes: 'Kuat tekan rata-rata 368 kg/cm², lulus pemeriksaan Project Supervisor.',
+    },
+    {
+      id: 'bim-comp-2',
+      stageNumber: 2,
+      stageLabel: 'Tahap Struktur',
+      name: 'Kolom Utama Pedestal & Portal Baja WF 400x200',
+      objectType: 'IfcColumn & IfcBeam / Structural Steel Portal Frame',
+      ifcCategory: 'IFCCOLUMN / IFCBEAM',
+      materialSpec: 'Baja Profil WF 400×200×8×13 BJ-41 + Baut Mutu Tinggi A325',
+      dimensions: 'Bentang 16.0 m × Panjang 24.0 m × Tinggi Kolom 7.5 m',
+      volumeEstimate: '42.8 Ton (64.0 m³ ekuivalen)',
+      completionPct: 100,
+      statusLabel: '100% Selesai',
+      technicalNotes: 'Uji torsi baut A325 & NDT Ultrasonic las struktur lulus 100% sesuai DED.',
+    },
+    {
+      id: 'bim-comp-3',
+      stageNumber: 3,
+      stageLabel: 'Tahap Dinding',
+      name: 'Dinding Bata Ringan AAC & Panel Akustik Rockwool',
+      objectType: 'IfcWallStandardCase / Insulated Masonry & Acoustic Wall',
+      ifcCategory: 'IFCWALL',
+      materialSpec: 'Bata Ringan AAC 10 cm + Plester Acian + Rockwool 50 mm (Density 80 kg/m³)',
+      dimensions: 'Keliling 80.0 m × Tinggi 6.8 m (Tebal Total 15 cm)',
+      volumeEstimate: '81.6 m³ (544.0 m²)',
+      completionPct: 20,
+      statusLabel: '20% Dalam Pengerjaan',
+      technicalNotes: 'Pemasangan dinding bata ringan sisi timur & barat sedang berlangsung.',
+    },
+    {
+      id: 'bim-comp-4',
+      stageNumber: 4,
+      stageLabel: 'Tahap Atap',
+      name: 'Rangka Atap Space Truss & Penutup Zincalume Berinsulasi',
+      objectType: 'IfcRoof / Steel Truss & Insulated Metal Roof Deck',
+      ifcCategory: 'IFCROOF',
+      materialSpec: 'Baja Ringan C-Truss Galvalum G550 + Atap Zincalume 0.45 mm + Aluminium Foil',
+      dimensions: '26.0 m × 18.0 m (Kemiringan 15° · Overstek 1.0 m)',
+      volumeEstimate: '468.0 m²',
+      completionPct: 20,
+      statusLabel: '20% Dalam Pengerjaan',
+      technicalNotes: 'Pabrikasi kuda-kuda utama selesai, persiapan ereksi gording atap.',
+    },
+    {
+      id: 'bim-comp-5',
+      stageNumber: 5,
+      stageLabel: 'Tahap Finishing',
+      name: 'Fasad Kaca Curtain Wall, Kanopi Entrance & Lantai Epoksi',
+      objectType: 'IfcCurtainWall & IfcSlab / Architectural Envelope & Flooring',
+      ifcCategory: 'IFCCURTAINWALL',
+      materialSpec: 'Kaca Tempered Low-E 12 mm + Rangka Aluminium Anodized + Cat Epoksi 1000 Micron',
+      dimensions: 'Kanopi 8.0 m × 3.0 m + Area Lantai 384.0 m²',
+      volumeEstimate: '384.0 m²',
+      completionPct: 0,
+      statusLabel: '0% Menunggu Jadwal',
+      technicalNotes: 'Menunggu penyelesaian penutup atap dan plesteran dinding utama.',
+    },
+  ],
+  mahanggi: [
+    {
+      id: 'bim-mahanggi-1',
+      stageNumber: 1,
+      stageLabel: 'Tahap Pondasi',
+      name: 'Pondasi Tapak Beton & Sloof Pengikat K-275 Rumah Gang Mahanggi',
+      objectType: 'IfcFooting / Reinforced Concrete Residential Foundation',
+      ifcCategory: 'IFCFOOTING',
+      materialSpec: 'Beton Bertulang K-275 + Pasangan Batu Kali & Tulangan Ulir D13',
+      dimensions: '14.0 m × 10.0 m × 1.0 m (12 Titik Footplat 100×100 cm)',
+      volumeEstimate: '24.5 m³',
+      completionPct: 100,
+      statusLabel: '100% Selesai',
+      technicalNotes: 'Pondasi & sloof Rumah Gang Mahanggi Tenggarong selesai 100% dan dana Tahap 1 telah cair.',
+    },
+    {
+      id: 'bim-mahanggi-2',
+      stageNumber: 2,
+      stageLabel: 'Tahap Struktur',
+      name: 'Kolom Utama, Balok Ring & Pelat Dak Beton Bertulang',
+      objectType: 'IfcColumn & IfcBeam / Residential Concrete Frame',
+      ifcCategory: 'IFCCOLUMN / IFCBEAM',
+      materialSpec: 'Beton Bertulang K-275 + Baja Tulangan Pokok D13 & Begel Ø8',
+      dimensions: 'Kolom 15×30 cm · Balok 15×25 cm · Tinggi 4.0 m',
+      volumeEstimate: '18.2 m³',
+      completionPct: 100,
+      statusLabel: '100% Selesai',
+      technicalNotes: 'Struktur kolom dan balok pengikat lulus pemeriksaan pengawas Ir. Dian Permatasari.',
+    },
+    {
+      id: 'bim-mahanggi-3',
+      stageNumber: 3,
+      stageLabel: 'Tahap Dinding',
+      name: 'Pasangan Dinding Bata Ringan, Plesteran & Acian Halus',
+      objectType: 'IfcWallStandardCase / Residential Masonry Wall',
+      ifcCategory: 'IFCWALL',
+      materialSpec: 'Bata Ringan AAC 10 cm + Mortar Perekat Instan + Plester Acian Semen',
+      dimensions: 'Luas Dinding 210.0 m² × Tebal 12.5 cm',
+      volumeEstimate: '32.0 m³',
+      completionPct: 20,
+      statusLabel: '20% Dalam Pengerjaan',
+      technicalNotes: 'Progres fisik dinding bata sedang berjalan (tersedia simulasi klaim 100%).',
+    },
+    {
+      id: 'bim-mahanggi-4',
+      stageNumber: 4,
+      stageLabel: 'Tahap Atap',
+      name: 'Rangka Atap Baja Ringan C75.75 & Penutup Genteng Metal Pasir',
+      objectType: 'IfcRoof / Cold-Formed Steel Roof Truss',
+      ifcCategory: 'IFCROOF',
+      materialSpec: 'Baja Ringan Kanal C75.75 + Reng R30.45 + Genteng Metal Berpasir',
+      dimensions: '15.6 m × 11.4 m (Kemiringan 30°)',
+      volumeEstimate: '177.8 m²',
+      completionPct: 20,
+      statusLabel: '20% Dalam Pengerjaan',
+      technicalNotes: 'Terintegrasi dengan Tahap 3 (Dinding dan Atap) kontrak Pembangunan Rumah Gang Mahanggi.',
+    },
+    {
+      id: 'bim-mahanggi-5',
+      stageNumber: 5,
+      stageLabel: 'Tahap Finishing',
+      name: 'Kanopi Teras, Kusen Aluminium, Plafon Gypsum & Lantai Granit 60x60',
+      objectType: 'IfcCurtainWall & IfcCovering / Residential Finishing & MEP',
+      ifcCategory: 'IFCCURTAINWALL',
+      materialSpec: 'Granit Tile 60×60 Homogeneous + Cat Eksterior WeatherShield + Instalasi Listrik',
+      dimensions: 'Luas Bangunan 120.0 m² + Kanopi Teras 4.5 m × 2.2 m',
+      volumeEstimate: '120.0 m²',
+      completionPct: 0,
+      statusLabel: '0% Menunggu Jadwal',
+      technicalNotes: 'Tahap 4 kontrak (Bobot 20% senilai Rp20.000.000) menunggu Tahap 3 selesai.',
+    },
+  ],
+};
+
+const INITIAL_BIM_VERSIONS: BimVersionHistoryItem[] = [
+  {
+    id: 'ver-bim-21',
+    projectKey: 'aula',
+    versionLabel: 'v2.1 (As-Built Struktur & Dinding)',
+    fileName: 'Gedung_Aula_SmartBuild_v2.1.glb',
+    format: 'GLB',
+    fileSize: '18.4 MB',
+    uploadedAt: '2026-11-15 11:20 WIB',
+    revisionNotes: 'Pembaruan geometri as-built kolom WF 400x200 dan progres dinding bata ringan 20%.',
+  },
+  {
+    id: 'ver-bim-10',
+    projectKey: 'aula',
+    versionLabel: 'v1.0 (Baseline Kontrak Awal)',
+    fileName: 'Gedung_Aula_SmartBuild_v1.0.glb',
+    format: 'GLB',
+    fileSize: '16.2 MB',
+    uploadedAt: '2026-08-01 08:30 WIB',
+    revisionNotes: 'Model 3D baseline kontrak awal sesuai dokumen DED.',
+  },
+  {
+    id: 'ver-bim-mahanggi-21',
+    projectKey: 'mahanggi',
+    versionLabel: 'v2.1 (As-Built Struktur & Dinding)',
+    fileName: 'Rumah_Gang_Mahanggi_v2.1.glb',
+    format: 'GLB',
+    fileSize: '14.8 MB',
+    uploadedAt: '2026-11-24 14:10 WIB',
+    revisionNotes: 'Sinkronisasi model 3D Rumah Gang Mahanggi Tenggarong (Pondasi & Struktur 100%, Dinding & Atap 20%).',
+  },
+  {
+    id: 'ver-bim-mahanggi-10',
+    projectKey: 'mahanggi',
+    versionLabel: 'v1.0 (Baseline Kontrak Awal)',
+    fileName: 'Rumah_Gang_Mahanggi_v1.0.ifc',
+    format: 'IFC',
+    fileSize: '12.4 MB',
+    uploadedAt: '2026-09-01 09:00 WIB',
+    revisionNotes: 'Baseline awal desain arsitektur & struktur Rumah Gang Mahanggi.',
+  },
+];
 
 interface BimViewerProps {
   db: SmartBuildDatabase;
@@ -1065,451 +1281,1097 @@ interface BimViewerProps {
 }
 
 export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }) => {
-  const [selectedModelId, setSelectedModelId] = useState(db.bim_models[0]?.id || 'bim-001');
-  const currentModel =
-    db.bim_models.find((m) => m.id === selectedModelId) || db.bim_models[0];
-
-  const [selectedElementId, setSelectedElementId] = useState<string>(
-    currentModel?.elements[0]?.id || 'bim-el-1'
+  const [selectedProjectOption, setSelectedProjectOption] = useState<string>('aula');
+  const [componentsByProject, setComponentsByProject] = useState<Record<string, DetailedBimComponent[]>>(
+    INITIAL_DETAILED_BIM_COMPONENTS
   );
-  const [highlightFilter, setHighlightFilter] = useState<string>('ALL');
-  const [cameraAngle, setCameraAngle] = useState<'iso' | 'front' | 'top'>('iso');
+  const [versionHistory, setVersionHistory] = useState<BimVersionHistoryItem[]>(INITIAL_BIM_VERSIONS);
+  const [selectedVersionId, setSelectedVersionId] = useState<string>('ver-bim-21');
+  const [stageFilter, setStageFilter] = useState<'ALL' | 1 | 2 | 3 | 4 | 5>('ALL');
 
-  // Upload / Reference update form
-  const [modelUrlInput, setModelUrlInput] = useState(currentModel?.modelUrl || '');
-  const [modelNameInput, setModelNameInput] = useState(currentModel?.modelName || '');
-  const [modelVersionInput, setModelVersionInput] = useState(currentModel?.version || '');
-  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  // 3D Viewport Camera & Exploded View Controls
+  const [rotationDeg, setRotationDeg] = useState<number>(0);
+  const [zoomScale, setZoomScale] = useState<number>(1);
+  const [explodedLevel, setExplodedLevel] = useState<number>(0);
+  const [showViewportControls, setShowViewportControls] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const viewportContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedElement: BimObjectElement | undefined =
-    currentModel?.elements.find((e) => e.id === selectedElementId) ||
-    currentModel?.elements[0];
+  const activeComponents =
+    componentsByProject[selectedProjectOption] || componentsByProject.aula;
+  const [selectedCompId, setSelectedCompId] = useState<string>(
+    activeComponents[0]?.id || 'bim-comp-1'
+  );
 
-  const handleSaveBimReference = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentModel) return;
-    onUpdateBimModel({
-      ...currentModel,
-      modelName: modelNameInput.trim() || currentModel.modelName,
-      modelUrl: modelUrlInput.trim() || currentModel.modelUrl,
-      version: modelVersionInput.trim() || currentModel.version,
-      lastUpdated: new Date().toISOString().split('T')[0],
-    });
-    setSavedNotice('Referensi file dan URL model BIM berhasil disimpan.');
+  const selectedComp =
+    activeComponents.find((c) => c.id === selectedCompId) || activeComponents[0];
+
+  const projectVersions = versionHistory.filter(
+    (v) => v.projectKey === selectedProjectOption
+  );
+  const activeVersion =
+    projectVersions.find((v) => v.id === selectedVersionId) ||
+    projectVersions[0] ||
+    versionHistory[0];
+
+  // Edit Selected BIM Element state
+  const [isEditingElement, setIsEditingElement] = useState<boolean>(false);
+  const [editForm, setEditForm] = useState<DetailedBimComponent>(selectedComp);
+
+  // Upload New BIM Model Version state
+  const bimFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadFileName, setUploadFileName] = useState<string>('');
+  const [uploadVersionLabel, setUploadVersionLabel] = useState<string>('');
+  const [uploadRevisionNotes, setUploadRevisionNotes] = useState<string>('');
+  const [uploadedFileSize, setUploadedFileSize] = useState<string>('19.2 MB');
+  const [bimFeedback, setBimFeedback] = useState<string | null>(null);
+
+  const handleProjectChange = (nextKey: string) => {
+    setSelectedProjectOption(nextKey);
+    const nextComps = componentsByProject[nextKey] || componentsByProject.aula;
+    const nextVers = versionHistory.filter((v) => v.projectKey === nextKey);
+    if (nextComps[0]) {
+      setSelectedCompId(nextComps[0].id);
+      setEditForm(nextComps[0]);
+    }
+    if (nextVers[0]) {
+      setSelectedVersionId(nextVers[0].id);
+    }
+    setIsEditingElement(false);
   };
 
+  const handleSelectComponent = (comp: DetailedBimComponent) => {
+    setSelectedCompId(comp.id);
+    setEditForm(comp);
+    setIsEditingElement(false);
+  };
+
+  const handleStartEditElement = () => {
+    if (!selectedComp) return;
+    setEditForm({ ...selectedComp });
+    setIsEditingElement(true);
+  };
+
+  const handleSaveEditedElement = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pct = Math.min(100, Math.max(0, Number(editForm.completionPct) || 0));
+    const autoStatusLabel =
+      pct >= 100
+        ? '100% Selesai'
+        : pct > 0
+        ? `${pct}% Dalam Pengerjaan`
+        : '0% Menunggu Jadwal';
+
+    const updatedComp: DetailedBimComponent = {
+      ...editForm,
+      completionPct: pct,
+      statusLabel: autoStatusLabel,
+    };
+
+    setComponentsByProject((prev) => ({
+      ...prev,
+      [selectedProjectOption]: (prev[selectedProjectOption] || []).map((c) =>
+        c.id === updatedComp.id ? updatedComp : c
+      ),
+    }));
+
+    // Also sync with db.bim_models so changes persist
+    const targetDbModel = db.bim_models[0];
+    if (targetDbModel) {
+      onUpdateBimModel({
+        ...targetDbModel,
+        lastUpdated: new Date().toISOString().split('T')[0],
+      });
+    }
+
+    setIsEditingElement(false);
+    setBimFeedback(
+      `Spesifikasi elemen BIM "${updatedComp.name}" (${updatedComp.ifcCategory}) berhasil diperbarui (${updatedComp.statusLabel}).`
+    );
+  };
+
+  const handleBimFilePickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadFileName(file.name);
+    const sizeMb = Math.max(0.1, file.size / (1024 * 1024));
+    setUploadedFileSize(`${sizeMb.toFixed(1)} MB`);
+    if (!uploadVersionLabel.trim()) {
+      setUploadVersionLabel(`v2.${projectVersions.length + 1} (Update Model ${file.name})`);
+    }
+    if (!uploadRevisionNotes.trim()) {
+      setUploadRevisionNotes(`Unggah file model 3D langsung dari perangkat (${file.name}).`);
+    }
+    e.target.value = '';
+  };
+
+  const handleUploadBimVersion = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanFile =
+      uploadFileName.trim() ||
+      (selectedProjectOption === 'mahanggi'
+        ? `Rumah_Gang_Mahanggi_v2.${projectVersions.length + 1}.glb`
+        : `Gedung_Aula_v2.${projectVersions.length + 1}.glb`);
+    const cleanLabel =
+      uploadVersionLabel.trim() ||
+      `v2.${projectVersions.length + 1} (Update Rangka Atap & Dinding)`;
+    const ext = cleanFile.toLowerCase().endsWith('.ifc')
+      ? 'IFC'
+      : cleanFile.toLowerCase().endsWith('.gltf')
+      ? 'glTF'
+      : 'GLB';
+
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' WIB';
+    const newVer: BimVersionHistoryItem = {
+      id: generateUniqueId('ver-bim'),
+      projectKey: selectedProjectOption,
+      versionLabel: cleanLabel,
+      fileName: cleanFile,
+      format: ext,
+      fileSize: uploadedFileSize || '18.9 MB',
+      uploadedAt: nowStr,
+      revisionNotes:
+        uploadRevisionNotes.trim() ||
+        'Pembaruan geometri model 3D BIM dan sinkronisasi parameter IFC.',
+    };
+
+    setVersionHistory((prev) => [newVer, ...prev]);
+    setSelectedVersionId(newVer.id);
+    setUploadFileName('');
+    setUploadVersionLabel('');
+    setUploadRevisionNotes('');
+
+    const targetDbModel = db.bim_models[0];
+    if (targetDbModel) {
+      onUpdateBimModel({
+        ...targetDbModel,
+        modelName: newVer.fileName,
+        version: newVer.versionLabel,
+        fileSize: newVer.fileSize,
+        lastUpdated: new Date().toISOString().split('T')[0],
+      });
+    }
+
+    setBimFeedback(
+      `Model BIM baru "${newVer.fileName}" (${newVer.versionLabel}) berhasil diunggah, divalidasi, dan diaktifkan pada viewport 3D.`
+    );
+  };
+
+  const handleToggleFullscreen = () => {
+    if (!viewportContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      viewportContainerRef.current.requestFullscreen?.().catch(() => {
+        setIsFullscreen((f) => !f);
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
+  // Vertical layer offsets when Exploded View slider is dragged (0 to 100)
+  const expFactor = explodedLevel / 100;
+  const offsetFoundation = Math.round(expFactor * 26);
+  const offsetStructure = Math.round(expFactor * 5);
+  const offsetWalls = Math.round(-expFactor * 16);
+  const offsetFinishing = Math.round(-expFactor * 28);
+  const offsetRoof = Math.round(-expFactor * 58);
+
+  const mahanggiProgress = db.projects[0]?.overallProgress ?? 60;
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Status Arsitektur BIM:{' '}
-            <strong className="text-[#1264F4] dark:text-blue-400">
-              {currentModel?.integrationStatus}
-            </strong>
-          </div>
-          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white mt-0.5">
-            BIM Viewer 3D &amp; Integrasi Model Bangunan
-          </h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Visualisasi struktural 3D terhubung tahapan pekerjaan, metadata objek bangunan, dan
-            penyimpanan referensi file IFC/Revit.
-          </p>
-        </div>
-
-        <select
-          aria-label="Pilih model BIM proyek"
-          value={selectedModelId}
-          onChange={(e) => {
-            const nextId = e.target.value;
-            setSelectedModelId(nextId);
-            const found = db.bim_models.find((m) => m.id === nextId);
-            if (found) {
-              setSelectedElementId(found.elements[0]?.id || '');
-              setModelUrlInput(found.modelUrl);
-              setModelNameInput(found.modelName);
-              setModelVersionInput(found.version);
-            }
-          }}
-          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+    <div className="space-y-5">
+      {bimFeedback && (
+        <div
+          role="status"
+          className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between gap-2"
         >
-          {db.bim_models.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.projectName} — {m.modelName} ({m.format})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Interactive 3D Isometric Viewport */}
-        <div className="lg:col-span-8 bg-[#071D49] text-white rounded-xl border border-slate-800 p-4 sm:p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/15">
-            <div>
-              <div className="text-xs text-slate-300 font-mono">
-                {currentModel?.modelName} · Versi {currentModel?.version} · {currentModel?.fileSize}
-              </div>
-              <div className="text-sm font-bold mt-0.5">
-                Viewport 3D Struktural: {currentModel?.projectName}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-lg text-xs">
-              <button
-                type="button"
-                onClick={() => setCameraAngle('iso')}
-                className={`px-2.5 py-1 rounded font-semibold ${
-                  cameraAngle === 'iso' ? 'bg-[#1264F4] text-white' : 'text-slate-300'
-                }`}
-              >
-                3D Isometrik
-              </button>
-              <button
-                type="button"
-                onClick={() => setCameraAngle('front')}
-                className={`px-2.5 py-1 rounded font-semibold ${
-                  cameraAngle === 'front' ? 'bg-[#1264F4] text-white' : 'text-slate-300'
-                }`}
-              >
-                Tampak Elevasi
-              </button>
-              <button
-                type="button"
-                onClick={() => setCameraAngle('top')}
-                className={`px-2.5 py-1 rounded font-semibold ${
-                  cameraAngle === 'top' ? 'bg-[#1264F4] text-white' : 'text-slate-300'
-                }`}
-              >
-                Denah Struktur
-              </button>
-            </div>
-          </div>
-
-          {/* Layer Filter Buttons */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-300">Filter Lapisan Tahapan:</span>
-            {['ALL', 'Pondasi', 'Struktur', 'Dinding dan Atap', 'Finishing'].map((layer) => (
-              <button
-                key={layer}
-                type="button"
-                onClick={() => setHighlightFilter(layer)}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  highlightFilter === layer
-                    ? 'bg-white text-[#071D49]'
-                    : 'bg-white/10 text-slate-200 hover:bg-white/20'
-                }`}
-              >
-                {layer === 'ALL' ? 'Semua Lapisan' : layer}
-              </button>
-            ))}
-          </div>
-
-          {/* Interactive SVG 3D Architectural Building Model */}
-          <div
-            data-testid="bim-3d-viewport"
-            className="relative bg-slate-950/70 rounded-xl border border-white/10 p-4 flex items-center justify-center min-h-[300px] sm:min-h-[360px]"
+          <span className="font-medium">{bimFeedback}</span>
+          <button
+            type="button"
+            onClick={() => setBimFeedback(null)}
+            className="text-emerald-700 dark:text-emerald-300 font-bold"
+            aria-label="Tutup notifikasi BIM"
           >
-            <svg
-              viewBox="0 0 600 340"
-              className="w-full max-w-xl h-64 sm:h-80 select-none transition-transform duration-200"
-              style={{
-                transform:
-                  cameraAngle === 'front'
-                    ? 'scaleY(0.92)'
-                    : cameraAngle === 'top'
-                    ? 'scaleY(0.75) rotate(-6deg)'
-                    : 'none',
-              }}
-              role="img"
-              aria-label="Visualisasi 3D Model Bangunan BIM"
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* TOP FILTER CARD: Proyek Konstruksi, Versi Model BIM, Filter Layer Tahapan Konstruksi */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-2xs">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          <div className="md:col-span-4">
+            <label
+              htmlFor="bim-project-select"
+              className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5"
             >
-              {/* Reference Grid */}
-              <g stroke="rgba(255,255,255,0.08)" strokeWidth="1">
-                <line x1="80" y1="270" x2="300" y2="320" />
-                <line x1="300" y1="320" x2="520" y2="270" />
-                <line x1="80" y1="270" x2="300" y2="220" />
-                <line x1="300" y1="220" x2="520" y2="270" />
-              </g>
+              Proyek Konstruksi
+            </label>
+            <select
+              id="bim-project-select"
+              value={selectedProjectOption}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            >
+              <option value="aula">Pembangunan Gedung Aula (60%)</option>
+              <option value="mahanggi">
+                Pembangunan Rumah di Gang Mahanggi Tenggarong ({mahanggiProgress}%)
+              </option>
+            </select>
+          </div>
 
-              {/* TAHAP 1: PONDASI */}
-              {(highlightFilter === 'ALL' || highlightFilter === 'Pondasi') && (
-                <g
-                  onClick={() => {
-                    const el = currentModel?.elements.find((e) => e.category === 'Pondasi');
-                    if (el) setSelectedElementId(el.id);
-                  }}
-                  className="cursor-pointer transition-opacity hover:opacity-95"
-                >
-                  <polygon
-                    points="130,260 300,305 470,260 300,215"
-                    fill="#10B981"
-                    fillOpacity={selectedElement?.category === 'Pondasi' ? '0.55' : '0.35'}
-                    stroke="#10B981"
-                    strokeWidth="2.5"
-                  />
-                  <rect x="145" y="252" width="22" height="14" fill="#10B981" />
-                  <rect x="289" y="290" width="22" height="14" fill="#10B981" />
-                  <rect x="435" y="252" width="22" height="14" fill="#10B981" />
-                  <rect x="289" y="215" width="22" height="14" fill="#10B981" />
-                  <text
-                    x="300"
-                    y="295"
-                    textAnchor="middle"
-                    fill="#A7F3D0"
-                    fontSize="11"
-                    fontFamily="monospace"
-                  >
-                    [1] PONDASI TAPAK &amp; SLOOF (100% SELESAI)
-                  </text>
-                </g>
-              )}
-
-              {/* TAHAP 2: STRUKTUR */}
-              {(highlightFilter === 'ALL' || highlightFilter === 'Struktur') && (
-                <g
-                  onClick={() => {
-                    const el = currentModel?.elements.find((e) => e.category === 'Struktur');
-                    if (el) setSelectedElementId(el.id);
-                  }}
-                  className="cursor-pointer transition-opacity hover:opacity-95"
-                >
-                  <line x1="155" y1="255" x2="155" y2="145" stroke="#10B981" strokeWidth="6" />
-                  <line x1="300" y1="292" x2="300" y2="175" stroke="#10B981" strokeWidth="6" />
-                  <line x1="445" y1="255" x2="445" y2="145" stroke="#10B981" strokeWidth="6" />
-                  <line x1="300" y1="220" x2="300" y2="115" stroke="#10B981" strokeWidth="5" />
-                  <polygon
-                    points="155,195 300,232 445,195 300,158"
-                    fill="#10B981"
-                    fillOpacity={selectedElement?.category === 'Struktur' ? '0.5' : '0.28'}
-                    stroke="#34D399"
-                    strokeWidth="2"
-                  />
-                  <text
-                    x="300"
-                    y="202"
-                    textAnchor="middle"
-                    fill="#D1FAE5"
-                    fontSize="11"
-                    fontFamily="monospace"
-                  >
-                    [2] STRUKTUR KOLOM &amp; BALOK (100% SELESAI)
-                  </text>
-                </g>
-              )}
-
-              {/* TAHAP 3: DINDING DAN ATAP */}
-              {(highlightFilter === 'ALL' || highlightFilter === 'Dinding dan Atap') && (
-                <g
-                  onClick={() => {
-                    const el = currentModel?.elements.find(
-                      (e) => e.category === 'Dinding dan Atap'
-                    );
-                    if (el) setSelectedElementId(el.id);
-                  }}
-                  className="cursor-pointer transition-opacity hover:opacity-95"
-                >
-                  <polygon
-                    points="140,145 300,70 460,145 300,180"
-                    fill="#1264F4"
-                    fillOpacity={selectedElement?.category === 'Dinding dan Atap' ? '0.6' : '0.35'}
-                    stroke="#60A5FA"
-                    strokeWidth="2.5"
-                  />
-                  <line
-                    x1="220"
-                    y1="108"
-                    x2="300"
-                    y2="180"
-                    stroke="#93C5FD"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 2"
-                  />
-                  <line
-                    x1="380"
-                    y1="108"
-                    x2="300"
-                    y2="180"
-                    stroke="#93C5FD"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 2"
-                  />
-                  <text
-                    x="300"
-                    y="132"
-                    textAnchor="middle"
-                    fill="#DBEAFE"
-                    fontSize="11"
-                    fontFamily="monospace"
-                  >
-                    [3] DINDING &amp; ATAP BAJA
-                  </text>
-                </g>
-              )}
-
-              {/* TAHAP 4: FINISHING */}
-              {(highlightFilter === 'ALL' || highlightFilter === 'Finishing') && (
-                <g
-                  onClick={() => {
-                    const el = currentModel?.elements.find((e) => e.category === 'Finishing');
-                    if (el) setSelectedElementId(el.id);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <polygon
-                    points="195,245 300,270 405,245 300,220"
-                    fill="none"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeDasharray="5 3"
-                  />
-                  <text
-                    x="300"
-                    y="250"
-                    textAnchor="middle"
-                    fill="#CBD5E1"
-                    fontSize="10"
-                    fontFamily="monospace"
-                  >
-                    [4] FINISHING &amp; MEP
-                  </text>
-                </g>
-              )}
-            </svg>
+          <div className="md:col-span-8">
+            <label
+              htmlFor="bim-version-select"
+              className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5"
+            >
+              Versi Model BIM (GLB / glTF)
+            </label>
+            <select
+              id="bim-version-select"
+              value={activeVersion?.id || ''}
+              onChange={(e) => setSelectedVersionId(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            >
+              {projectVersions.map((ver) => (
+                <option key={ver.id} value={ver.id}>
+                  {ver.versionLabel} — {ver.fileName} ({ver.format})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        {/* Right Panel: Inspector Objek Bangunan & Referensi File BIM */}
-        <div className="lg:col-span-4 space-y-5">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
-            <div className="flex items-center gap-2 text-[#071D49] dark:text-white">
-              <Box className="w-4 h-4 text-[#1264F4]" />
-              <h2 className="text-sm font-bold">Informasi Objek Bangunan (BIM Inspector)</h2>
-            </div>
-
-            <div className="space-y-1.5">
-              {currentModel?.elements.map((el) => (
+        <div>
+          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+            Filter Layer Tahapan Konstruksi
+          </div>
+          <div className="inline-flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+            {[
+              { id: 'ALL' as const, label: 'Semua Tahap' },
+              { id: 1 as const, label: '1. Pondasi' },
+              { id: 2 as const, label: '2. Struktur' },
+              { id: 3 as const, label: '3. Dinding' },
+              { id: 4 as const, label: '4. Atap' },
+              { id: 5 as const, label: '5. Finishing' },
+            ].map((tab) => {
+              const active = stageFilter === tab.id;
+              return (
                 <button
-                  key={el.id}
+                  key={String(tab.id)}
                   type="button"
-                  onClick={() => setSelectedElementId(el.id)}
-                  className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors ${
-                    selectedElement?.id === el.id
-                      ? 'border-[#1264F4] bg-[#EAF2FF]/60 dark:bg-blue-950/50'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  onClick={() => {
+                    setStageFilter(tab.id);
+                    if (tab.id !== 'ALL') {
+                      const match = activeComponents.find((c) => c.stageNumber === tab.id);
+                      if (match) handleSelectComponent(match);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    active
+                      ? 'bg-[#0F172A] dark:bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[#071D49] dark:text-blue-300">
-                      {el.code}
-                    </span>
-                    <span className="font-mono font-semibold text-[#1264F4] dark:text-blue-400 tabular-nums">
-                      Progres: {el.completionRate}%
-                    </span>
-                  </div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-100 mt-0.5">
-                    {el.name}
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Tahap #{el.milestoneOrder} ({el.category}) · Status: {el.inspectionState}
-                  </div>
+                  {tab.label}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-            {selectedElement && (
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
-                <div className="font-bold text-[#071D49] dark:text-white">
-                  Detail Properti Objek Terpilih:
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Elevasi / Level:</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200">
-                    {selectedElement.level}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Spesifikasi Material:</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200 text-right max-w-[200px]">
-                    {selectedElement.material}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Estimasi Volume BIM:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100 tabular-nums">
-                    {selectedElement.volumeM3} m³
-                  </span>
-                </div>
-              </div>
-            )}
+      {/* 3D INTERACTIVE VIEWPORT */}
+      <div
+        ref={viewportContainerRef}
+        data-testid="bim-3d-viewport"
+        className={`relative rounded-xl overflow-hidden border border-slate-800 bg-[#091426] text-white select-none flex flex-col justify-between ${
+          isFullscreen ? 'min-h-screen' : 'min-h-[420px] sm:min-h-[500px]'
+        }`}
+      >
+        {/* Top-Left File Overlay Badge */}
+        <div className="p-4 sm:p-5 z-10 flex flex-wrap items-start justify-between gap-3 pointer-events-none">
+          <div className="px-3.5 py-2.5 rounded-lg bg-[#0F1E36]/90 border border-slate-700/80 backdrop-blur-xs shadow-lg pointer-events-auto">
+            <div className="font-mono font-bold text-xs sm:text-sm text-white">
+              {activeVersion?.fileName || 'Gedung_Aula_SmartBuild_v2.1.glb'}
+            </div>
+            <div className="font-mono text-[11px] text-slate-300 mt-0.5">
+              Format: {activeVersion?.format || 'GLB'} · Klik elemen 3D untuk inspeksi parameter IFC
+            </div>
           </div>
 
-          {/* Penyimpanan Referensi File & URL Model BIM */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
-            <div className="flex items-center gap-2 text-[#071D49] dark:text-white">
-              <Upload className="w-4 h-4 text-[#1264F4]" />
-              <h2 className="text-sm font-bold">Penyimpanan Referensi &amp; URL Model BIM</h2>
+          {explodedLevel > 0 && (
+            <div className="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 font-mono text-xs font-bold">
+              Exploded View Aktif: {explodedLevel}%
+            </div>
+          )}
+        </div>
+
+        {/* Center 3D Architectural Building Scene */}
+        <div className="relative flex-1 flex items-center justify-center px-2 py-4 overflow-hidden">
+          <svg
+            viewBox="0 0 800 460"
+            className="w-full max-w-4xl h-[300px] sm:h-[380px] transition-transform duration-300 ease-out"
+            style={{
+              transform: `scale(${zoomScale}) rotate(${rotationDeg * 0.15}deg)`,
+            }}
+            role="img"
+            aria-label="Viewport 3D Model Bangunan BIM Interaktif"
+          >
+            <defs>
+              <linearGradient id="skyHorizon" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#071120" />
+                <stop offset="52%" stopColor="#0D1B30" />
+                <stop offset="53%" stopColor="#1B2B44" />
+                <stop offset="100%" stopColor="#132036" />
+              </linearGradient>
+              <radialGradient id="floorSpotlight" cx="50%" cy="55%" r="42%">
+                <stop offset="0%" stopColor="#071120" stopOpacity="0.95" />
+                <stop offset="75%" stopColor="#0A172B" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#1B2B44" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* Horizon Background */}
+            <rect x="0" y="0" width="800" height="460" fill="url(#skyHorizon)" />
+
+            {/* Circular Floor Radar Platform */}
+            <ellipse cx="400" cy="315" rx="285" ry="125" fill="url(#floorSpotlight)" />
+
+            {/* Perspective Blueprint Grid Lines */}
+            <g stroke="#1E3A5F" strokeWidth="1" opacity="0.65">
+              <line x1="70" y1="265" x2="540" y2="430" />
+              <line x1="120" y1="245" x2="600" y2="410" />
+              <line x1="175" y1="225" x2="660" y2="390" />
+              <line x1="230" y1="205" x2="715" y2="370" />
+              <line x1="285" y1="185" x2="760" y2="345" />
+              <line x1="340" y1="168" x2="790" y2="320" />
+
+              <line x1="730" y1="265" x2="260" y2="430" />
+              <line x1="680" y1="245" x2="200" y2="410" />
+              <line x1="625" y1="225" x2="140" y2="390" />
+              <line x1="570" y1="205" x2="85" y2="370" />
+              <line x1="515" y1="185" x2="40" y2="345" />
+              <line x1="460" y1="168" x2="10" y2="320" />
+            </g>
+
+            {/* Main 3D Building Assembly (rotates/pans slightly with rotationDeg) */}
+            <g
+              transform={`translate(${Math.sin((rotationDeg * Math.PI) / 180) * 18}, 0)`}
+            >
+              {/* ============================================================
+               * LAYER 1: PONDASI TAPAK & TIE BEAM SLOOF (MINT GREEN)
+               * ========================================================== */}
+              {(stageFilter === 'ALL' || stageFilter === 1) && (
+                <g
+                  transform={`translate(0, ${offsetFoundation})`}
+                  onClick={() => {
+                    const comp = activeComponents.find((c) => c.stageNumber === 1);
+                    if (comp) handleSelectComponent(comp);
+                  }}
+                  className="cursor-pointer transition-all duration-300 hover:brightness-110"
+                >
+                  {/* Base Foundation Slab */}
+                  <polygon
+                    points="235,280 445,358 565,292 355,222"
+                    fill="#86EFAC"
+                    stroke="#34D399"
+                    strokeWidth={selectedComp?.stageNumber === 1 ? '3' : '1.5'}
+                  />
+                  {/* Front Left Thickness */}
+                  <polygon
+                    points="235,280 445,358 445,374 235,294"
+                    fill="#6EE7B7"
+                    stroke="#10B981"
+                    strokeWidth="1.2"
+                  />
+                  {/* Front Right Thickness */}
+                  <polygon
+                    points="445,358 565,292 565,308 445,374"
+                    fill="#34D399"
+                    stroke="#059669"
+                    strokeWidth="1.2"
+                  />
+                  {/* Footing Pedestal Pads */}
+                  <polygon points="246,278 268,286 278,280 256,272" fill="#A7F3D0" />
+                  <polygon points="338,312 360,320 370,314 348,306" fill="#A7F3D0" />
+                  <polygon points="430,346 452,354 462,348 440,340" fill="#A7F3D0" />
+                </g>
+              )}
+
+              {/* ============================================================
+               * LAYER 3: DINDING BATA RINGAN AAC & PANEL AKUSTIK (YELLOW)
+               * ========================================================== */}
+              {(stageFilter === 'ALL' || stageFilter === 3) && (
+                <g
+                  transform={`translate(0, ${offsetWalls})`}
+                  onClick={() => {
+                    const comp = activeComponents.find((c) => c.stageNumber === 3);
+                    if (comp) handleSelectComponent(comp);
+                  }}
+                  className="cursor-pointer transition-all duration-300 hover:brightness-110"
+                >
+                  {/* Back Left Wall */}
+                  <polygon
+                    points="255,274 355,222 355,135 255,182"
+                    fill="#EAB308"
+                    fillOpacity="0.88"
+                    stroke="#CA8A04"
+                    strokeWidth="1.5"
+                  />
+                  {/* Back Right Wall */}
+                  <polygon
+                    points="355,222 548,286 548,195 355,135"
+                    fill="#FACC15"
+                    fillOpacity="0.9"
+                    stroke="#CA8A04"
+                    strokeWidth="1.5"
+                  />
+                  {/* Front Right Yellow Wall (Main visible yellow wall in screenshot) */}
+                  <polygon
+                    points="445,348 548,288 548,196 445,250"
+                    fill="#FDE047"
+                    stroke={selectedComp?.stageNumber === 3 ? '#FFFFFF' : '#EAB308'}
+                    strokeWidth={selectedComp?.stageNumber === 3 ? '3' : '1.5'}
+                  />
+                </g>
+              )}
+
+              {/* ============================================================
+               * LAYER 2: STRUKTUR KOLOM PEDESTAL & PORTAL BAJA WF (BLUE)
+               * ========================================================== */}
+              {(stageFilter === 'ALL' || stageFilter === 2) && (
+                <g
+                  transform={`translate(0, ${offsetStructure})`}
+                  onClick={() => {
+                    const comp = activeComponents.find((c) => c.stageNumber === 2);
+                    if (comp) handleSelectComponent(comp);
+                  }}
+                  className="cursor-pointer transition-all duration-300 hover:brightness-110"
+                >
+                  {/* Back Columns */}
+                  <polygon points="350,224 360,224 360,130 350,130" fill="#0369A1" />
+                  <polygon points="442,255 452,255 452,158 442,158" fill="#0369A1" />
+                  <polygon points="542,290 554,290 554,190 542,190" fill="#0284C7" />
+
+                  {/* Front Row 3D Blue Columns (Left, Middle, Right) */}
+                  {/* Column 1 (Front-Left) */}
+                  <polygon points="248,282 260,287 260,178 248,174" fill="#38BDF8" />
+                  <polygon points="260,287 268,282 268,174 260,178" fill="#0284C7" />
+
+                  {/* Column 2 (Front-Center) */}
+                  <polygon points="342,317 354,322 354,210 342,205" fill="#38BDF8" />
+                  <polygon points="354,322 362,317 362,205 354,210" fill="#0284C7" />
+
+                  {/* Column 3 (Front-Right Corner) */}
+                  <polygon points="436,352 450,357 450,242 436,237" fill="#38BDF8" />
+                  <polygon points="450,357 460,351 460,237 450,242" fill="#0369A1" />
+
+                  {/* Upper & Mid Perimeter Portal Beams */}
+                  {/* Front Top Beam */}
+                  <polygon
+                    points="248,176 450,244 450,254 248,186"
+                    fill="#0EA5E9"
+                    stroke="#0284C7"
+                    strokeWidth="1"
+                  />
+                  {/* Front Middle Tie Beam */}
+                  <polygon
+                    points="254,225 446,292 446,300 254,233"
+                    fill="#0284C7"
+                  />
+                  {/* Right Top Beam */}
+                  <polygon
+                    points="450,244 554,190 554,200 450,254"
+                    fill="#0369A1"
+                  />
+                  {/* Left Top Beam */}
+                  <polygon
+                    points="248,176 355,128 355,137 248,185"
+                    fill="#0284C7"
+                  />
+                  {/* Back Right Top Beam */}
+                  <polygon
+                    points="355,128 554,190 554,199 355,137"
+                    fill="#075985"
+                  />
+                  {/* Internal Cross Portal Beams */}
+                  <polygon
+                    points="348,208 448,158 454,162 354,212"
+                    fill="#0284C7"
+                  />
+                </g>
+              )}
+
+              {/* ============================================================
+               * LAYER 5: FINISHING — KANOPI ENTRANCE & CURTAIN WALL (WHITE)
+               * ========================================================== */}
+              {(stageFilter === 'ALL' || stageFilter === 5) && (
+                <g
+                  transform={`translate(0, ${offsetFinishing})`}
+                  onClick={() => {
+                    const comp = activeComponents.find((c) => c.stageNumber === 5);
+                    if (comp) handleSelectComponent(comp);
+                  }}
+                  className="cursor-pointer transition-all duration-300 hover:brightness-105"
+                >
+                  {/* Cantilevered Front Entrance Canopy */}
+                  <polygon
+                    points="250,242 365,284 330,305 215,262"
+                    fill="#F1F5F9"
+                    stroke={selectedComp?.stageNumber === 5 ? '#38BDF8' : '#CBD5E1'}
+                    strokeWidth="1.5"
+                  />
+                  <polygon
+                    points="215,262 330,305 330,312 215,269"
+                    fill="#CBD5E1"
+                  />
+                  <polygon
+                    points="330,305 365,284 365,291 330,312"
+                    fill="#94A3B8"
+                  />
+                </g>
+              )}
+
+              {/* ============================================================
+               * LAYER 4: RANGKA ATAP SPACE TRUSS & ZINCALUME (LIGHT BLUE)
+               * ========================================================== */}
+              {(stageFilter === 'ALL' || stageFilter === 4) && (
+                <g
+                  transform={`translate(0, ${offsetRoof})`}
+                  onClick={() => {
+                    const comp = activeComponents.find((c) => c.stageNumber === 4);
+                    if (comp) handleSelectComponent(comp);
+                  }}
+                  className="cursor-pointer transition-all duration-300 hover:brightness-110"
+                >
+                  {/* Main Sloped Insulated Roof Deck */}
+                  <polygon
+                    points="290,126 500,192 585,146 375,86"
+                    fill="#BAE6FD"
+                    stroke={selectedComp?.stageNumber === 4 ? '#FFFFFF' : '#7DD3FC'}
+                    strokeWidth={selectedComp?.stageNumber === 4 ? '3' : '1.5'}
+                  />
+                  {/* Roof Deck Side Trim */}
+                  <polygon
+                    points="290,126 500,192 500,200 290,134"
+                    fill="#7DD3FC"
+                  />
+                  <polygon
+                    points="500,192 585,146 585,154 500,200"
+                    fill="#38BDF8"
+                  />
+                  {/* Exposed Front Purlin / Space Truss Bars */}
+                  <polygon
+                    points="232,148 475,222 480,216 237,142"
+                    fill="#7DD3FC"
+                  />
+                  <polygon
+                    points="232,148 475,222 475,228 232,154"
+                    fill="#38BDF8"
+                  />
+                  <polygon
+                    points="272,130 515,204 520,198 277,124"
+                    fill="#93C5FD"
+                  />
+                </g>
+              )}
+            </g>
+          </svg>
+        </div>
+
+        {/* Bottom Collapsible Control Bar & Exploded View Slider */}
+        <div className="p-3 sm:p-4 z-10 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowViewportControls((s) => !s)}
+            className="px-3.5 py-1.5 rounded-lg bg-[#0F1E36]/95 hover:bg-[#162947] border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 shadow-md"
+          >
+            <span>{showViewportControls ? '⌄ Sembunyikan Kontrol' : '⌃ Tampilkan Kontrol'}</span>
+          </button>
+
+          {showViewportControls && (
+            <div className="w-full max-w-5xl px-4 py-3 rounded-xl bg-[#0F1E36]/95 border border-slate-700/90 backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRotationDeg((r) => r - 30)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs font-semibold text-white transition-colors"
+                >
+                  Putar Kiri 30°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRotationDeg((r) => r + 30)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs font-semibold text-white transition-colors"
+                >
+                  Putar Kanan 30°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs font-semibold text-white transition-colors"
+                >
+                  ⊕ Zoom In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((z) => Math.max(0.75, Number((z - 0.1).toFixed(2))))}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs font-semibold text-white transition-colors"
+                >
+                  ⊖ Zoom Out
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRotationDeg(0);
+                    setZoomScale(1);
+                    setExplodedLevel(0);
+                    setStageFilter('ALL');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-600/80 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset Kamera</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  className="px-3 py-1.5 rounded-lg bg-[#0284C7] hover:bg-sky-500 text-xs font-semibold text-white transition-colors"
+                >
+                  ⤢ Fullscreen
+                </button>
+              </div>
+
+              {/* Exploded View Slider */}
+              <div className="flex items-center gap-2.5 text-xs shrink-0">
+                <span className="text-sky-400 font-semibold flex items-center gap-1.5">
+                  <Box className="w-3.5 h-3.5" />
+                  <span>Exploded View:</span>
+                </span>
+                <input
+                  type="range"
+                  aria-label="Slider Exploded View Model BIM"
+                  min={0}
+                  max={100}
+                  value={explodedLevel}
+                  onChange={(e) => setExplodedLevel(Number(e.target.value))}
+                  className="w-28 sm:w-36 accent-sky-400 cursor-pointer"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* BOTTOM 3-COLUMN SECTION: Inspector + Component List + Upload & Version History */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+        {/* COLUMN 1: Informasi Teknis Elemen BIM Terpilih (with Edit capability) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-2xs">
+          {selectedComp && !isEditingElement ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-white">
+                  Informasi Teknis Elemen BIM Terpilih
+                </h2>
+                <Box className="w-4 h-4 text-[#0284C7] shrink-0" />
+              </div>
+
+              <div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">Nama Objek</div>
+                <div className="text-sm font-bold text-[#0F172A] dark:text-white mt-0.5">
+                  {selectedComp.name}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">Jenis Objek</div>
+                  <div className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-0.5 leading-snug">
+                    {selectedComp.objectType}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">Kategori IFC</div>
+                  <div className="text-xs font-mono font-bold text-[#0284C7] dark:text-sky-400 mt-0.5">
+                    {selectedComp.ifcCategory}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Material &amp; Mutu
+                </div>
+                <div className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-0.5 leading-snug">
+                  {selectedComp.materialSpec}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Ukuran / Dimensi
+                  </div>
+                  <div className="text-xs font-mono text-slate-800 dark:text-slate-200 mt-0.5 leading-relaxed">
+                    {selectedComp.dimensions}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Volume Estimasi
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">
+                    {selectedComp.volumeEstimate}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">
+                    {selectedComp.stageLabel} ({selectedComp.statusLabel})
+                  </span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">
+                    {selectedComp.completionPct}%
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      selectedComp.completionPct >= 100
+                        ? 'bg-[#10B981]'
+                        : selectedComp.completionPct > 0
+                        ? 'bg-[#0284C7]'
+                        : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                    style={{ width: `${selectedComp.completionPct}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
+                  Catatan Teknis: {selectedComp.technicalNotes}
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* INLINE EDITOR FORM FOR SELECTED BIM ELEMENT */
+            <form onSubmit={handleSaveEditedElement} className="space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-slate-800">
+                <h2 className="text-sm font-bold text-[#071D49] dark:text-white">
+                  Edit Parameter IFC &amp; Spesifikasi Elemen BIM
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingElement(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Objek BIM
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Jenis Objek
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.objectType}
+                    onChange={(e) => setEditForm({ ...editForm, objectType: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Kategori IFC
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.ifcCategory}
+                    onChange={(e) => setEditForm({ ...editForm, ifcCategory: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Material &amp; Mutu
+                </label>
+                <input
+                  type="text"
+                  value={editForm.materialSpec}
+                  onChange={(e) => setEditForm({ ...editForm, materialSpec: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Ukuran / Dimensi
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.dimensions}
+                    onChange={(e) => setEditForm({ ...editForm, dimensions: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Volume Estimasi
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.volumeEstimate}
+                    onChange={(e) => setEditForm({ ...editForm, volumeEstimate: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Realisasi Progres Elemen (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={editForm.completionPct}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, completionPct: Number(e.target.value) })
+                  }
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Catatan Teknis Lapangan
+                </label>
+                <textarea
+                  rows={2}
+                  value={editForm.technicalNotes}
+                  onChange={(e) => setEditForm({ ...editForm, technicalNotes: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingElement(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#1264F4] hover:bg-blue-700 text-white font-semibold"
+                >
+                  Simpan Perubahan BIM
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!isEditingElement && (
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={handleStartEditElement}
+                className="w-full py-2 px-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 hover:bg-blue-100/70 text-[#1264F4] dark:text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>✎ Edit Spesifikasi &amp; Progres Elemen BIM</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* COLUMN 2: Daftar Komponen Bangunan & Integrasi Tahapan */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-2xs">
+          <div className="space-y-3">
+            <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-white leading-snug">
+                Daftar Komponen Bangunan &amp; Integrasi Tahapan
+              </h2>
             </div>
 
-            {savedNotice && (
-              <div className="p-2.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200">
-                {savedNotice}
-              </div>
-            )}
+            <div className="space-y-2.5">
+              {activeComponents.map((comp) => {
+                const isSelected = selectedComp?.id === comp.id;
+                return (
+                  <button
+                    key={comp.id}
+                    type="button"
+                    onClick={() => handleSelectComponent(comp)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'border-[#38BDF8] bg-[#F0F9FF] dark:bg-sky-950/40 shadow-2xs'
+                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-xs font-bold text-[#0F172A] dark:text-white leading-snug">
+                        {comp.name}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                        {comp.ifcCategory} · {comp.stageLabel} ({comp.statusLabel})
+                      </div>
+                    </div>
+                    <div className="font-mono font-bold text-xs text-slate-900 dark:text-white shrink-0">
+                      {comp.completionPct}%
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-            <form onSubmit={handleSaveBimReference} className="space-y-3 text-xs">
+          {/* Kepatuhan Teknis BIM (Bagian 11.3 PRD) */}
+          <div className="p-3.5 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/30 border border-[#FDE68A] dark:border-amber-800/70 text-[11px] text-[#92400E] dark:text-amber-200 leading-relaxed">
+            <strong className="font-bold">Kepatuhan Teknis BIM (Bagian 11.3 PRD):</strong>{' '}
+            Visualisasi model 3D BIM digunakan sebagai acuan desain dan pemetaan tahapan.
+            Pemeriksaan kesesuaian kondisi aktual lapangan tetap wajib divalidasi oleh{' '}
+            <strong className="font-bold">Project Supervisor</strong> yang berwenang.
+          </div>
+        </div>
+
+        {/* COLUMN 3: Unggah Versi Model BIM (.GLB / .glTF / .IFC) & Riwayat Versi */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-2xs">
+          <div className="space-y-4">
+            <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-white leading-snug">
+                Unggah Versi Model BIM (.GLB / .glTF / .IFC)
+              </h2>
+            </div>
+
+            <form onSubmit={handleUploadBimVersion} className="space-y-3 text-xs">
+              {/* Real Device File Picker */}
               <div>
-                <label
-                  htmlFor="bim-file-name"
-                  className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Nama File Referensi BIM (.ifc / .rvt)
-                </label>
                 <input
-                  id="bim-file-name"
+                  ref={bimFileInputRef}
+                  type="file"
+                  accept=".glb,.gltf,.ifc,.rvt,.obj"
+                  onChange={handleBimFilePickerChange}
+                  className="hidden"
+                  id="bim-model-file-picker"
+                />
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    htmlFor="bim-upload-filename"
+                    className="font-semibold text-slate-700 dark:text-slate-300"
+                  >
+                    Nama File Model (.glb / .gltf / .ifc)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => bimFileInputRef.current?.click()}
+                    className="text-[11px] font-bold text-[#1264F4] dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Pilih File HP/PC</span>
+                  </button>
+                </div>
+                <input
+                  id="bim-upload-filename"
                   type="text"
-                  value={modelNameInput}
-                  onChange={(e) => setModelNameInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
+                  value={uploadFileName}
+                  onChange={(e) => setUploadFileName(e.target.value)}
+                  placeholder="Contoh: Gedung_Aula_v2.2.glb"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 font-mono text-xs text-slate-900 dark:text-white"
                 />
               </div>
+
               <div>
                 <label
-                  htmlFor="bim-url"
+                  htmlFor="bim-upload-label"
                   className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  URL Model BIM / Endpoint Repository
+                  Label Versi Model
                 </label>
                 <input
-                  id="bim-url"
+                  id="bim-upload-label"
                   type="text"
-                  value={modelUrlInput}
-                  onChange={(e) => setModelUrlInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg font-mono"
+                  value={uploadVersionLabel}
+                  onChange={(e) => setUploadVersionLabel(e.target.value)}
+                  placeholder="Contoh: v2.2 (Update Rangka Atap)"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
+
               <div>
                 <label
-                  htmlFor="bim-ver"
+                  htmlFor="bim-upload-notes"
                   className="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Versi Sinkronisasi Model
+                  Catatan Revisi Model
                 </label>
                 <input
-                  id="bim-ver"
+                  id="bim-upload-notes"
                   type="text"
-                  value={modelVersionInput}
-                  onChange={(e) => setModelVersionInput(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg"
+                  value={uploadRevisionNotes}
+                  onChange={(e) => setUploadRevisionNotes(e.target.value)}
+                  placeholder="Deskripsi perubahan geometri BIM..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
+
               <button
                 type="submit"
-                className="w-full py-2 px-3 bg-[#071D49] dark:bg-slate-800 hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 px-4 rounded-lg bg-[#0F172A] hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
               >
-                <Link2 className="w-3.5 h-3.5" />
-                <span>Simpan Referensi File &amp; URL BIM</span>
+                <Upload className="w-3.5 h-3.5" />
+                <span>Unggah &amp; Validasi Model BIM</span>
               </button>
             </form>
+
+            {/* Riwayat Versi Model */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Riwayat Versi Model
+              </div>
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-0.5">
+                {projectVersions.map((ver) => {
+                  const isCurrent = activeVersion?.id === ver.id;
+                  return (
+                    <button
+                      key={ver.id}
+                      type="button"
+                      onClick={() => setSelectedVersionId(ver.id)}
+                      className={`w-full text-left p-3 rounded-xl border transition-all ${
+                        isCurrent
+                          ? 'border-[#0284C7] bg-sky-50/60 dark:bg-sky-950/30'
+                          : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-100/70'
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-[#0F172A] dark:text-white">
+                        {ver.versionLabel}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                        {ver.fileName} · {ver.fileSize} · {ver.uploadedAt}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1518,8 +2380,113 @@ export const BimViewerView: React.FC<BimViewerProps> = ({ db, onUpdateBimModel }
 };
 
 /* ============================================================================
- * MODUL F: VERIFIKASI PEKERJAAN & PEMERIKSAAN DIGITAL EVIDENCE
+ * MODUL F: VERIFIKASI PEKERJAAN TERPADU (TEKNIS SUPERVISOR & ADMINISTRASI PRD 3.5)
  * ========================================================================== */
+
+interface AdminVerificationDocumentItem {
+  id: string;
+  fileName: string;
+  stageLabel: string;
+  projectName: string;
+  uploaderName: string;
+  uploaderOrg: string;
+  uploadedAt: string;
+  technicalStatus: 'Diterima' | 'Menunggu pemeriksaan' | 'Perlu Revisi Teknis';
+  adminStatus: 'Dokumen Lengkap & Valid' | 'Menunggu Verifikasi' | 'Perlu Revisi Dokumen';
+  linkedVerificationId?: string;
+}
+
+const INITIAL_ADMIN_VERIFICATION_DOCS: AdminVerificationDocumentItem[] = [
+  {
+    id: 'adm-doc-1',
+    fileName: 'pondasi_aula_k350_final.jpg',
+    stageLabel: '2. Pondasi',
+    projectName: 'Pembangunan Gedung Aula',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-09-15 16:40 WIB',
+    technicalStatus: 'Diterima',
+    adminStatus: 'Dokumen Lengkap & Valid',
+  },
+  {
+    id: 'adm-doc-2',
+    fileName: 'laporan_uji_tekan_pondasi_aula.pdf',
+    stageLabel: '2. Pondasi',
+    projectName: 'Pembangunan Gedung Aula',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-09-16 09:20 WIB',
+    technicalStatus: 'Diterima',
+    adminStatus: 'Dokumen Lengkap & Valid',
+  },
+  {
+    id: 'adm-doc-3',
+    fileName: 'struktur_baja_wf_aula.jpg',
+    stageLabel: '3. Struktur',
+    projectName: 'Pembangunan Gedung Aula',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-10-29 17:10 WIB',
+    technicalStatus: 'Diterima',
+    adminStatus: 'Dokumen Lengkap & Valid',
+  },
+  {
+    id: 'adm-doc-4',
+    fileName: 'ba_struktur_dan_ndt_aula.pdf',
+    stageLabel: '3. Struktur',
+    projectName: 'Pembangunan Gedung Aula',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-10-30 10:05 WIB',
+    technicalStatus: 'Diterima',
+    adminStatus: 'Dokumen Lengkap & Valid',
+  },
+  {
+    id: 'adm-doc-5',
+    fileName: 'fasad_kaca_kantor_pusat.png',
+    stageLabel: '4. Dinding Partisi & Fasad',
+    projectName: 'Renovasi Kantor Pusat',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-11-22 15:30 WIB',
+    technicalStatus: 'Menunggu pemeriksaan',
+    adminStatus: 'Menunggu Verifikasi',
+  },
+  {
+    id: 'adm-doc-6',
+    fileName: 'uji_sealant_fasad_kantor.pdf',
+    stageLabel: '5. Plafon & Atap Kanopi',
+    projectName: 'Renovasi Kantor Pusat',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-11-23 11:00 WIB',
+    technicalStatus: 'Menunggu pemeriksaan',
+    adminStatus: 'Menunggu Verifikasi',
+  },
+  {
+    id: 'adm-doc-7',
+    fileName: 'bast_pho_rumah_tinggal.pdf',
+    stageLabel: '8. Pemeriksaan Akhir',
+    projectName: 'Pembangunan Rumah di Gang Mahanggi Tenggarong',
+    uploaderName: 'Ir. Raka Pratama',
+    uploaderOrg: 'PT Bangun Karya Mandiri',
+    uploadedAt: '2026-10-12 14:00 WIB',
+    technicalStatus: 'Diterima',
+    adminStatus: 'Dokumen Lengkap & Valid',
+  },
+  {
+    id: 'adm-doc-8',
+    fileName: 'dinding_bata_dan_rangka_atap_mahanggi.jpg',
+    stageLabel: '3. Dinding dan Atap',
+    projectName: 'Pembangunan Rumah di Gang Mahanggi Tenggarong',
+    uploaderName: 'Muhajirin Kasim',
+    uploaderOrg: 'Kontraktor Pelaksana',
+    uploadedAt: '2026-11-25 14:30 WIB',
+    technicalStatus: 'Menunggu pemeriksaan',
+    adminStatus: 'Menunggu Verifikasi',
+    linkedVerificationId: 'ver-003',
+  },
+];
 
 interface VerificationViewProps {
   db: SmartBuildDatabase;
@@ -1538,12 +2505,16 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
   currentUser,
   onProcessVerification,
 }) => {
+  const [adminDocs, setAdminDocs] = useState<AdminVerificationDocumentItem[]>(
+    INITIAL_ADMIN_VERIFICATION_DOCS
+  );
   const [selectedVer, setSelectedVer] = useState<VerificationRecord | null>(null);
   const [approvedPctInput, setApprovedPctInput] = useState<number>(100);
   const [notesInput, setNotesInput] = useState<string>('');
   const [bimCheckedInput, setBimCheckedInput] = useState<boolean>(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<AdminVerificationDocumentItem | null>(null);
 
   const canVerify = canPerformAction(currentUser.role, 'verify_progress');
 
@@ -1554,6 +2525,29 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
     );
     setNotesInput(ver.notes);
     setBimCheckedInput(ver.bimChecked || true);
+  };
+
+  const handleAdminValidate = (
+    docItem: AdminVerificationDocumentItem,
+    nextAdminStatus: 'Dokumen Lengkap & Valid' | 'Perlu Revisi Dokumen'
+  ) => {
+    setAdminDocs((prev) =>
+      prev.map((d) =>
+        d.id === docItem.id
+          ? {
+              ...d,
+              adminStatus: nextAdminStatus,
+              technicalStatus:
+                nextAdminStatus === 'Dokumen Lengkap & Valid' ? 'Diterima' : d.technicalStatus,
+            }
+          : d
+      )
+    );
+    setFeedback(
+      nextAdminStatus === 'Dokumen Lengkap & Valid'
+        ? `Berkas "${docItem.fileName}" (${docItem.stageLabel}) telah divalidasi: Dokumen Lengkap & Valid.`
+        : `Permintaan revisi dokumen telah dikirimkan untuk berkas "${docItem.fileName}" (${docItem.stageLabel}).`
+    );
   };
 
   const handleDecision = (decisionStatus: VerificationStatus) => {
@@ -1572,6 +2566,21 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
       notesInput.trim() || `Keputusan verifikasi: ${decisionStatus}`,
       bimCheckedInput
     );
+
+    if (decisionStatus === 'Disetujui') {
+      setAdminDocs((prev) =>
+        prev.map((d) =>
+          d.linkedVerificationId === selectedVer.id
+            ? {
+                ...d,
+                technicalStatus: 'Diterima',
+                adminStatus: 'Dokumen Lengkap & Valid',
+              }
+            : d
+        )
+      );
+    }
+
     setFeedback(
       `Verifikasi "${selectedVer.milestoneName}" (${selectedVer.projectName}) diperbarui menjadi "${decisionStatus}".${
         decisionStatus === 'Disetujui' && finalApprovedPct >= 100
@@ -1590,40 +2599,73 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
     ? db.progress_reports.find((r) => r.id === selectedVer.reportId)
     : undefined;
 
+  const validDocsCount = adminDocs.filter(
+    (d) => d.adminStatus === 'Dokumen Lengkap & Valid'
+  ).length;
+  const pendingDocsCount = adminDocs.filter(
+    (d) => d.adminStatus !== 'Dokumen Lengkap & Valid'
+  ).length;
+  const approvedStagesCount = db.verifications.filter((v) => v.status === 'Disetujui').length;
+
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-[#071D49] dark:text-white">
-            Verifikasi Pekerjaan &amp; Pemeriksaan Bukti Digital (Digital Evidence)
-          </h1>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Periksa file bukti foto/dokumen yang diunggah Kontraktor (Muhajirin Kasim), validasi
-            BIM, dan setujui untuk mencairkan dana otomatis ke Bank Mandiri 1480025086508.
-          </p>
+      {/* KPI Monitoring Ringkas Terpadu */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Total Berkas Bukti Digital
+          </div>
+          <div className="text-xl font-bold font-mono text-[#071D49] dark:text-white mt-1">
+            {adminDocs.length} Berkas
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Terhubung pemeriksaan teknis &amp; administrasi
+          </div>
         </div>
 
-        <select
-          aria-label="Filter status verifikasi"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-        >
-          <option value="ALL">Semua Status Verifikasi ({db.verifications.length})</option>
-          <option value="Menunggu pemeriksaan">Menunggu pemeriksaan</option>
-          <option value="Dalam pemeriksaan">Dalam pemeriksaan</option>
-          <option value="Disetujui">Disetujui</option>
-          <option value="Memerlukan revisi">Memerlukan revisi</option>
-          <option value="Ditolak">Ditolak</option>
-        </select>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Dokumen Lengkap &amp; Valid
+          </div>
+          <div className="text-xl font-bold font-mono text-[#10B981] mt-1">
+            {validDocsCount} / {adminDocs.length} Valid
+          </div>
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">
+            Lulus Verifikasi Administratif (PRD 3.5)
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Menunggu Verifikasi / Revisi
+          </div>
+          <div className="text-xl font-bold font-mono text-[#D97706] mt-1">
+            {pendingDocsCount} Berkas
+          </div>
+          <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
+            Siap divalidasi oleh Verifikator
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Tahapan Lulus Pemeriksaan Teknis
+          </div>
+          <div className="text-xl font-bold font-mono text-[#1264F4] dark:text-blue-400 mt-1">
+            {approvedStagesCount} / {db.verifications.length} Tahap
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Otomatis trigger Smart Contract Escrow
+          </div>
+        </div>
       </div>
 
       {feedback && (
         <div
           role="status"
-          className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between"
+          className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between gap-2"
         >
-          <span>{feedback}</span>
+          <span className="font-medium">{feedback}</span>
           <button
             type="button"
             onClick={() => setFeedback(null)}
@@ -1635,7 +2677,200 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+      {/* BAGIAN 1: VERIFIKASI ADMINISTRASI & KELENGKAPAN DOKUMEN (BAGIAN 3.5 PRD) */}
+      <div className="space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex items-start sm:items-center gap-3.5 shadow-2xs">
+          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
+              Verifikasi Administrasi &amp; Kelengkapan Dokumen (Bagian 3.5 PRD)
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Pemisahan tegas antara verifikasi kelengkapan dokumen administratif oleh Verifikator
+              Administrasi dan pemeriksaan teknis konstruksi oleh Project Supervisor.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          {/* Mobile Cards (< md) */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {adminDocs.map((doc) => (
+              <div key={doc.id} className="p-4 space-y-2.5 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDoc(doc)}
+                      className="font-bold text-slate-900 dark:text-white hover:text-[#1264F4] text-left break-all"
+                    >
+                      {doc.fileName}
+                    </button>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {doc.stageLabel} · {doc.projectName}
+                    </div>
+                  </div>
+                  <span
+                    className={`font-bold text-[11px] shrink-0 ${
+                      doc.adminStatus === 'Dokumen Lengkap & Valid'
+                        ? 'text-[#059669]'
+                        : doc.adminStatus === 'Perlu Revisi Dokumen'
+                        ? 'text-red-600'
+                        : 'text-[#D97706]'
+                    }`}
+                  >
+                    {doc.adminStatus}
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                  <div>
+                    Pengunggah: <strong>{doc.uploaderName}</strong> ({doc.uploaderOrg})
+                  </div>
+                  <div className="font-mono text-slate-400">{doc.uploadedAt}</div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] pt-1">
+                  <span className="text-slate-500">
+                    Pemeriksaan Teknis:{' '}
+                    <strong className="text-slate-800 dark:text-slate-100">
+                      {doc.technicalStatus}
+                    </strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleAdminValidate(doc, 'Dokumen Lengkap & Valid')}
+                    className="py-2 px-3 rounded-lg bg-[#86C5AC] hover:bg-[#059669] text-white font-bold text-xs transition-colors"
+                  >
+                    Validasi Lengkap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdminValidate(doc, 'Perlu Revisi Dokumen')}
+                    className="py-2 px-3 rounded-lg bg-[#E5989B] hover:bg-red-600 text-white font-bold text-xs transition-colors"
+                  >
+                    Minta Revisi Dokumen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table (>= md) matching image_555ee64a.png */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/80 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-300">
+                  <th className="py-3.5 px-5 font-semibold">Berkas &amp; Tahap</th>
+                  <th className="py-3.5 px-5 font-semibold">Pengunggah &amp; Waktu</th>
+                  <th className="py-3.5 px-5 font-semibold">Pemeriksaan Teknis (Supervisor)</th>
+                  <th className="py-3.5 px-5 font-semibold">Verifikasi Administratif</th>
+                  <th className="py-3.5 px-5 font-semibold">Tindakan Verifikator</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
+                {adminDocs.map((doc) => (
+                  <tr
+                    key={doc.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-4 px-5">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDoc(doc)}
+                        className="font-bold text-sm text-[#0F172A] dark:text-white hover:text-[#1264F4] text-left block"
+                      >
+                        {doc.fileName}
+                      </button>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {doc.stageLabel}
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="text-slate-700 dark:text-slate-200 font-medium">
+                        {doc.uploaderName} ({doc.uploaderOrg})
+                      </div>
+                      <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {doc.uploadedAt}
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {doc.technicalStatus}
+                      </span>
+                    </td>
+                    <td className="py-4 px-5">
+                      <span
+                        className={`font-bold ${
+                          doc.adminStatus === 'Dokumen Lengkap & Valid'
+                            ? 'text-[#059669] dark:text-emerald-400'
+                            : doc.adminStatus === 'Perlu Revisi Dokumen'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-[#D97706] dark:text-amber-400'
+                        }`}
+                      >
+                        {doc.adminStatus}
+                      </span>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAdminValidate(doc, 'Dokumen Lengkap & Valid')}
+                          className="px-3.5 py-2 rounded-lg bg-[#84C3AA] hover:bg-[#059669] text-white font-bold text-xs transition-colors leading-tight text-center"
+                        >
+                          Validasi Lengkap
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAdminValidate(doc, 'Perlu Revisi Dokumen')}
+                          className="px-3.5 py-2 rounded-lg bg-[#E49598] hover:bg-red-600 text-white font-bold text-xs transition-colors leading-tight text-center"
+                        >
+                          Minta Revisi Dokumen
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* BAGIAN 2: PEMERIKSAAN TEKNIS TAHAPAN KONSTRUKSI & PENCAIRAN OTOMATIS (PROJECT SUPERVISOR) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-[#071D49] dark:text-white">
+              Monitoring Pemeriksaan Teknis Tahapan &amp; Pencairan Smart Contract (Project Supervisor)
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Panel terpadu untuk memeriksa progres fisik tahapan konstruksi, validasi objek BIM 3D,
+              dan menyetujui pencairan otomatis ke rekening kontraktor.
+            </p>
+          </div>
+
+          <select
+            aria-label="Filter status verifikasi"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2 text-xs font-semibold border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+          >
+            <option value="ALL">Semua Status Pemeriksaan ({db.verifications.length})</option>
+            <option value="Menunggu pemeriksaan">Menunggu pemeriksaan</option>
+            <option value="Dalam pemeriksaan">Dalam pemeriksaan</option>
+            <option value="Disetujui">Disetujui</option>
+            <option value="Memerlukan revisi">Memerlukan revisi</option>
+            <option value="Ditolak">Ditolak</option>
+          </select>
+        </div>
+
         {/* Mobile Verification Cards (< md) */}
         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
           {filteredVerifications.map((ver) => (
@@ -1673,7 +2908,8 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
 
               <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
                 <div>
-                  Diajukan: <strong className="font-mono">{ver.submittedPercentage}%</strong> · Disetujui:{' '}
+                  Diajukan: <strong className="font-mono">{ver.submittedPercentage}%</strong> ·
+                  Disetujui:{' '}
                   <strong className="font-mono text-[#1264F4] dark:text-blue-400">
                     {ver.approvedPercentage}%
                   </strong>
@@ -1709,8 +2945,8 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
                 <th className="py-3 px-4 font-semibold">Tahap Pekerjaan &amp; Bukti Digital</th>
                 <th className="py-3 px-4 font-semibold text-right">Diajukan</th>
                 <th className="py-3 px-4 font-semibold text-right">Disetujui</th>
-                <th className="py-3 px-4 font-semibold">Verifikator &amp; BIM</th>
-                <th className="py-3 px-4 font-semibold">Status Verifikasi</th>
+                <th className="py-3 px-4 font-semibold">Supervisor &amp; BIM</th>
+                <th className="py-3 px-4 font-semibold">Status Teknis</th>
                 <th className="py-3 px-4 font-semibold text-right">Tindakan</th>
               </tr>
             </thead>
@@ -1775,7 +3011,89 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
         </div>
       </div>
 
-      {/* Modal Detail Verifikasi, Preview Bukti Digital & Keputusan */}
+      {/* Modal Preview Berkas Administratif */}
+      {previewDoc && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-4"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full p-5 space-y-4 text-xs shadow-2xl">
+            <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-[#1264F4]">
+                  Detail Berkas Verifikasi Administrasi (PRD 3.5)
+                </span>
+                <h3 className="text-sm font-bold font-mono text-slate-900 dark:text-white mt-0.5 break-all">
+                  {previewDoc.fileName}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-slate-600 dark:text-slate-300">
+              <div className="flex justify-between">
+                <span>Proyek:</span>
+                <strong className="text-slate-900 dark:text-white">{previewDoc.projectName}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Tahap Konstruksi:</span>
+                <strong className="text-slate-900 dark:text-white">{previewDoc.stageLabel}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Pengunggah:</span>
+                <strong>
+                  {previewDoc.uploaderName} ({previewDoc.uploaderOrg})
+                </strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Pemeriksaan Teknis (Supervisor):</span>
+                <strong>{previewDoc.technicalStatus}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Status Administratif:</span>
+                <strong
+                  className={
+                    previewDoc.adminStatus === 'Dokumen Lengkap & Valid'
+                      ? 'text-[#059669]'
+                      : 'text-[#D97706]'
+                  }
+                >
+                  {previewDoc.adminStatus}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  handleAdminValidate(previewDoc, 'Dokumen Lengkap & Valid');
+                  setPreviewDoc(null);
+                }}
+                className="px-3.5 py-2 rounded-lg bg-[#059669] text-white font-bold"
+              >
+                Validasi Lengkap
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 font-semibold"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Verifikasi Teknis, Preview Bukti Digital & Keputusan */}
       {selectedVer && (
         <div
           role="dialog"
@@ -1802,7 +3120,6 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
               </button>
             </div>
 
-            {/* Digital Evidence Preview inside Verification Modal */}
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-[#071D49] dark:text-white">
@@ -1944,3 +3261,4 @@ export const VerificationView: React.FC<VerificationViewProps> = ({
     </div>
   );
 };
+

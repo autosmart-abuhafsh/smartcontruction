@@ -42,6 +42,8 @@ export type MenuId =
   | 'progress'
   | 'bim'
   | 'verification'
+  | 'escrow'
+  | 'disputes'
   | 'payments'
   | 'transactions'
   | 'reports'
